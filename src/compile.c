@@ -254,7 +254,7 @@ static char* corto_t_section(corto_t *t, char *start) {
     if (!end) {
         goto error;
     } else {
-        id = (corto_t_slice){ptr, ptr - end};
+        id = (corto_t_slice){ptr, 1 + end - ptr};
     }
 
     /* Account for spaces */
@@ -264,7 +264,7 @@ static char* corto_t_section(corto_t *t, char *start) {
      * operation for it */
     if (*ptr == CORTO_T_CLOSE) {
         /* Add variable to template program */
-        corto_t_addVar(t, ptr, 1 + end - ptr);
+        corto_t_addVar(t, id.ptr, id.len);
 
     /* If next token is a '|', this section is a filter */
     } else if (*ptr == '|') {

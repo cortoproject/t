@@ -5,7 +5,14 @@
 
 static void corto_t_printslice(corto_t_slice slice) {
     corto_uint32 i = 0;
-    for (i = 0; i < slice.len; i++) {
+    corto_int32 len = slice.len;
+
+    if (len < 0) {
+        printf("warning: len of slice < 0 (%d)\n", slice.len);
+        len = 5;
+    }
+
+    for (i = 0; i < len; i++) {
         putc(slice.ptr[i], stdout);
     }
 }
