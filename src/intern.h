@@ -36,3 +36,5 @@ struct corto_t {
     corto_t_opbuffer ops;
     corto_t_opbuffer *current;
 };
+
+void corto_t_print(corto_t *t);

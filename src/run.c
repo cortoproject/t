@@ -9,8 +9,8 @@ typedef struct corto_t_run_t {
 } corto_t_run_t;
 
 static void corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
-    switch(op->kind) {
 
+    switch(op->kind) {
     case CORTO_T_TEXT: {
         corto_buffer_appendstrn(
             &data->buf,
@@ -30,7 +30,6 @@ static void corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
         }
         break;
     }
-
     }
 }
 
