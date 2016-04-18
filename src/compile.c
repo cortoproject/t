@@ -104,7 +104,183 @@ static char* corto_t_text(corto_t *t, char *start) {
     return ptr - 1;
 }
 
+static corto_int16 corto_t_filter(corto_t *t, corto_t_slice id, corto_t_slice filter) {
+    return 0;
+}
+
+static corto_int16 corto_t_function(
+    corto_t *t,
+    corto_t_slice func,
+    corto_t_slice id)
+{
+    return 0;
+}
+
+static corto_int16 corto_t_comparator(
+    corto_t *t,
+    corto_t_slice func,
+    corto_t_slice arg1,
+    corto_t_slice comparator)
+{
+    return 0;
+}
+
+static corto_int16 corto_t_comparator_2arg(
+    corto_t *t,
+    corto_t_slice func,
+    corto_t_slice arg1,
+    corto_t_slice comparator,
+    corto_t_slice arg2)
+{
+    return 0;
+}
+
+static char* corto_t_section_parseFilter(
+    corto_t *t,
+    char *start,
+    corto_t_slice id)
+{
+    char *ptr = corto_t_skipspace(start);
+    corto_t_slice filter;
+
+    /* Parse filter identifier */
+    char *end = corto_t_id(t, ptr);
+    if (!end) {
+        goto error;
+    } else {
+        filter = (corto_t_slice){ptr, ptr - end};
+    }
+
+    corto_t_filter(t, id, filter);
+
+    return corto_t_skipspace(end);
+error:
+    return NULL;
+}
+
+static char* corto_t_section_parseComparator(
+    corto_t *t,
+    char *start,
+    corto_t_slice func,
+    corto_t_slice arg1)
+{
+    char *ptr = corto_t_skipspace(start);
+    corto_t_slice comparator, arg2;
+
+    /* Parse comparator id */
+    char *end = corto_t_id(t, ptr);
+    if (!end) {
+        goto error;
+    } else {
+        comparator = (corto_t_slice){ptr, ptr - end};
+    }
+
+    ptr = corto_t_skipspace(end + 1);
+
+    /* If section closes, found a comparator with a single argument */
+    if (*ptr == CORTO_T_CLOSE) {
+        corto_t_comparator(t, func, arg1, comparator);
+
+    /* If section doesn't close, a comparator argument is expected */
+    } else {
+        /* Parse 2nd comparator argument */
+        end = corto_t_id(t, ptr);
+        if (!end) {
+            goto error;
+        } else {
+            arg2 = (corto_t_slice){ptr, ptr - end};
+        }
+
+        ptr = corto_t_skipspace(end + 1);
+        if (*ptr == CORTO_T_CLOSE) {
+            corto_t_comparator_2arg(t, func, arg1, comparator, arg2);
+
+        /* No more tokens expected */
+        } else {
+            corto_t_err(t, "unexpected token", ptr);
+            goto error;
+        }
+    }
+
+    return ptr;
+error:
+    return NULL;
+}
+
+static char* corto_t_section_parseFunction(
+    corto_t *t,
+    char *start,
+    corto_t_slice func)
+{
+    corto_t_slice id;
+
+    /* Parse argument for function */
+    char *ptr, *end = corto_t_id(t, start);
+    if (!end) {
+        goto error;
+    } else {
+        id = (corto_t_slice){start, start - end};
+    }
+
+    ptr = corto_t_skipspace(end + 1);
+
+    /* If closing curly brace is found, there are no comparators */
+    if (*ptr == CORTO_T_CLOSE) {
+        corto_t_function(t, func, id);
+
+    /* If section doesn't close, expect comparator */
+    } else if ((ptr[0] == 'i') && (ptr[1] == 's')) {
+        ptr = corto_t_section_parseComparator(t, ptr + 2, func, id);
+
+    } else {
+        corto_t_err(t, "unexpected token", ptr);
+        goto error;
+    }
+
+    return ptr;
+error:
+    return NULL;
+}
+
 static char* corto_t_section(corto_t *t, char *start) {
+    /* Slices for possible tokens */
+    corto_t_slice id;
+
+    /* {} section may start with whitespace */
+    char *ptr = corto_t_skipspace(start);
+
+    /* Parse first identifier */
+    char *end = corto_t_id(t, ptr);
+    if (!end) {
+        goto error;
+    } else {
+        id = (corto_t_slice){ptr, ptr - end};
+    }
+
+    /* Account for spaces */
+    ptr = corto_t_skipspace(end + 1);
+
+    /* If an identifier just appears by itself in a section, create a var
+     * operation for it */
+    if (*ptr == CORTO_T_CLOSE) {
+        /* Add variable to template program */
+        corto_t_addVar(t, ptr, 1 + end - ptr);
+
+    /* If next token is a '|', this section is a filter */
+    } else if (*ptr == '|') {
+        ptr = corto_t_section_parseFilter(t, ptr, id);
+
+    /* Otherwise, a function call is expected */
+    } else {
+        ptr = corto_t_section_parseFunction(t, ptr, id);
+    }
+
+    return ptr;
+error:
+    return NULL;
+}
+
+static char* corto_t_sigil(corto_t *t, char *start) {
     char *ptr = start + 1; /* Skip sigil */
     char ch = *ptr;
 
@@ -113,22 +289,11 @@ static char* corto_t_section(corto_t *t, char *start) {
         ptr --; /* Give back whitespace */
         corto_t_addVar(t, NULL, 0);
 
+    /* Open a section with {} */
     } else if (ch == CORTO_T_OPEN) {
-        ptr = corto_t_skipspace(ptr + 1);
+        ptr = corto_t_section(t, ptr + 1);
 
-        char *end = corto_t_id(t, ptr);
-        if (!end) {
-            goto error;
-        }
-
-        corto_t_addVar(t, ptr, 1 + end - ptr);
-
-        ptr = corto_t_skipspace(end + 1);
-        if (*ptr != CORTO_T_CLOSE) {
-            corto_t_err(t, "mismatched '{'", start);
-            goto error;
-        }
-
+    /* '$' is followed by an identifier */
     } else {
         char *end = corto_t_id(t, ptr);
         if (!end) {
@@ -154,7 +319,7 @@ corto_t* corto_t_compile(corto_string template) {
     for (ptr = template; (ch = *ptr); ptr ++) {
         switch(ch) {
         case CORTO_T_SIGIL:
-            ptr = corto_t_section(t, ptr);
+            ptr = corto_t_sigil(t, ptr);
             if (!ptr) {
                 goto error;
             }
