@@ -6,7 +6,44 @@ typedef struct corto_t_run_t {
     corto_t *t;
     corto_buffer buf;
     corto_t_context *ctx;
+    corto_t_opbuff *current;
+    corto_uint32 op;
 } corto_t_run_t;
+
+static void corto_t_runop(corto_t_op *op, corto_t_run_t *data);
+
+corto_int16 corto_t_run_ops(
+    corto_int32 length,
+    corto_t_run_t *data)
+{
+    corto_uint32 count = 0;
+    do {
+        while ((data->op < data->current->opCount) && ((length < 0) || (count < length))) {
+            corto_t_op *op = &data->current->ops[data->op];
+            corto_t_runop(op, data);
+            data->op ++;
+            count ++;
+        }
+        data->op = 0;
+    } while ((data->current = data->current->next));
+
+    return 0;
+}
+
+corto_int16 corto_t_block_run(
+    corto_t *t,
+    corto_t_block *b,
+    corto_buffer *buffer,
+    corto_t_context *ctx)
+{
+    corto_t_run_t data = {t, *buffer, ctx, b->ops, b->start};
+
+    corto_t_run_ops(b->length, &data);
+
+    *buffer = data.buf;
+
+    return 0;
+}
 
 static void corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 
@@ -36,17 +73,9 @@ static void corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 }
 
 corto_string corto_t_run(corto_t *t, corto_t_context *ctx) {
-    corto_t_opbuffer *current = &t->ops;
-    corto_t_run_t data = {t, CORTO_BUFFER_INIT, ctx};
+    corto_t_run_t data = {t, CORTO_BUFFER_INIT, ctx, &t->ops, 0};
 
-    do {
-        corto_uint32 i = 0;
-        while (i < current->opcount) {
-            corto_t_op *op = &current->ops[i];
-            corto_t_runop(op, &data);
-            i ++;
-        }
-    } while ((current = current->next));
+    corto_t_run_ops(-1, &data);
 
     return corto_buffer_str(&data.buf);
 }

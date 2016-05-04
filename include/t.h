@@ -14,6 +14,7 @@
 #define CORTO_T_OPEN '{'
 #define CORTO_T_CLOSE '}'
 #define CORTO_T_OP_BUFF_COUNT (64)
+#define CORTO_T_IMPORT_BUFF_COUNT (8)
 
 typedef struct corto_t corto_t;
 
@@ -34,6 +35,11 @@ typedef struct corto_t_block corto_t_block;
 CORTO_T_EXPORT corto_t* corto_t_compile(corto_string template);
 CORTO_T_EXPORT void corto_t_free(corto_t *t);
 CORTO_T_EXPORT corto_string corto_t_run(corto_t *t, corto_t_context *ctx);
+CORTO_T_EXPORT corto_int16 corto_t_block_run(
+    corto_t *t,
+    corto_t_block *b,
+    corto_buffer *buffer,
+    corto_t_context *ctx);
 
 /* $end */
 

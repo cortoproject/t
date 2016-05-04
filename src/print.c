@@ -33,12 +33,12 @@ static void corto_t_printop(corto_t_op *op) {
 }
 
 void corto_t_print(corto_t *t) {
-    corto_t_opbuffer *current = &t->ops;
+    corto_t_opbuff *current = &t->ops;
 
     printf("## Compile '%s'\n", t->template);
     do {
         corto_uint32 i = 0;
-        while (i < current->opcount) {
+        while (i < current->opCount) {
             corto_t_op *op = &current->ops[i];
             corto_t_printop(op);
             i ++;

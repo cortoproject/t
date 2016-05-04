@@ -1,4 +1,6 @@
 
+typedef struct corto_t_opbuff corto_t_opbuff;
+
 /* Different op kinds */
 typedef enum corto_t_opKind {
     CORTO_T_TEXT,
@@ -11,6 +13,13 @@ typedef struct corto_t_slice {
     corto_int32 len;
 } corto_t_slice;
 
+/* Function block */
+struct corto_t_block {
+    corto_t_opbuff *ops;
+    corto_uint32 start;
+    corto_uint32 length;
+};
+
 /* Single template operation */
 typedef struct corto_t_op {
     corto_t_opKind kind;
@@ -22,23 +31,36 @@ typedef struct corto_t_op {
             corto_t_slice key;
         } var;
         struct {
-            corto_t_slice function;
+            corto_t_function function;
             corto_t_slice arg;
+            corto_t_block block;
         } func;
     } data;
 } corto_t_op;
 
 /* Block of n operations */
-typedef struct corto_t_opbuffer {
+struct corto_t_opbuff {
     corto_t_op ops[CORTO_T_OP_BUFF_COUNT];
-    corto_uint32 opcount;
-    struct corto_t_opbuffer *next;
-} corto_t_opbuffer;
+    corto_uint32 count;
+    struct corto_t_opbuff *next;
+};
+
+/* Block of n imports */
+typedef struct corto_t_importbuff {
+    corto_object imports[CORTO_T_IMPORT_BUFF_COUNT];
+    corto_uint32 count;
+    struct corto_t_importbuff *next;
+} corto_t_importbuff;
 
 struct corto_t {
+    /* Original template string */
     corto_string template;
-    corto_t_opbuffer ops;
-    corto_t_opbuffer *current;
+
+    /* Operations */
+    corto_t_opbuff ops;
+
+    /* Imported packages */
+    corto_t_importbuff imports;
 };
 
 void corto_t_print(corto_t *t);
