@@ -93,7 +93,9 @@ static char* corto_t_text(corto_t *t, char *start) {
     for (ptr = start; (ch = *ptr); ptr ++) {
         if (ch == CORTO_T_SIGIL) break;
         if (ch == '\\') {
-            ptr ++; /* Escape next character */
+            corto_t_addText(t, start, ptr - start);
+            ptr += 1; /* Escape next character */
+            start = ptr;
         }
     }
 
