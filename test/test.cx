@@ -1,0 +1,14 @@
+#package /test
+
+test/suite Identifier::
+    void tc_identifier()
+    void tc_identifierBraces()
+    void tc_identifierBracesWhitespace1()
+    void tc_identifierBracesWhitespace2()
+    void tc_identifierBracesWhitespace3()
+    void tc_identifierEmbed()
+    void tc_identifierBracesEmbed()
+    void tc_identifierNotExist()
+    void tc_identifierBracesNotExist()
+    void tc_identifierEmbedNotExist()
+    void tc_identifierBracesEmbedNotExist()

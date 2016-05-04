@@ -27,6 +27,8 @@ static void corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
         corto_t_var *v = data->ctx->findvar(key, data->ctx->data);
         if (v) {
             corto_buffer_appendstr(&data->buf, v->value);
+        } else {
+            corto_buffer_appendstr(&data->buf, "");
         }
         break;
     }

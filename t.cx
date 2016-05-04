@@ -1,0 +1,9 @@
+#package corto/t
+
+native/type value: "corto_value*"
+native/type block: "corto_t_block*"
+native/type context: "corto_t_context*"
+
+procedure function: base=function ::
+    member requiresBlock: bool
+    int16 init() method

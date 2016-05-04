@@ -21,6 +21,10 @@ typedef struct corto_t_op {
         struct {
             corto_t_slice key;
         } var;
+        struct {
+            corto_t_slice function;
+            corto_t_slice arg;
+        } func;
     } data;
 } corto_t_op;
 

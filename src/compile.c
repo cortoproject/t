@@ -104,7 +104,7 @@ static char* corto_t_text(corto_t *t, char *start) {
     return ptr - 1;
 }
 
-static corto_int16 corto_t_block(corto_t *t, corto_t_slice fwd) {
+static corto_int16 corto_t_codeblock(corto_t *t, corto_t_slice fwd) {
     return 0;
 }
 
@@ -116,10 +116,10 @@ static corto_int16 corto_t_filter(corto_t *t, corto_t_slice id, corto_t_slice fi
     return 0;
 }
 
-static corto_int16 corto_t_function(
+static corto_int16 corto_t_func(
     corto_t *t,
     corto_t_slice func,
-    corto_t_slice id)
+    corto_t_slice arg)
 {
     return 0;
 }
@@ -155,7 +155,7 @@ static char* corto_t_section_parseForward(corto_t *t, char *start) {
 
     char *ptr = corto_t_skipspace(end);
     if (*ptr == CORTO_T_CLOSE) {
-        corto_t_block(t, fwd);
+        corto_t_codeblock(t, fwd);
     } else {
         char *end = corto_t_id(t, ptr);
         if (!end) {
@@ -263,7 +263,7 @@ static char* corto_t_section_parseFunction(
 
     /* If closing curly brace is found, there are no comparators */
     if (*ptr == CORTO_T_CLOSE) {
-        corto_t_function(t, func, id);
+        corto_t_func(t, func, id);
 
     /* If section doesn't close, expect comparator */
     } else if ((ptr[0] == 'i') && (ptr[1] == 's')) {
@@ -280,7 +280,7 @@ error:
 }
 
 static char* corto_t_section(corto_t *t, char *start) {
-    /* Slices for possible tokens */
+    /* Slice for identifier */
     corto_t_slice id;
 
     /* {} section may start with whitespace */
@@ -375,9 +375,15 @@ corto_t* corto_t_compile(corto_string template) {
         }
     }
 
-    corto_t_print(t);
-
     return t;
 error:
     return NULL;
+}
+
+void corto_t_free(corto_t *t) {
+    corto_t_opbuffer *b, *next;
+
+    for (next = t->ops.next; (b = next); next = b->next, corto_dealloc(b));
+
+    corto_dealloc(t);
 }

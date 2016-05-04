@@ -1,0 +1,6 @@
+
+PACKAGE = 'corto/t/std'
+
+PREFIX = 'corto/t/std'
+
+require "#{ENV['CORTO_BUILD']}/package"
