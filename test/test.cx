@@ -1,5 +1,10 @@
 #package /test
 
+struct Point::
+    x, y: int32
+
+array Points: Point, 3
+
 test/suite Identifier::
     void tc_identifier()
     void tc_identifierBraces()
@@ -30,6 +35,12 @@ test/suite Function::
     void tc_functionTwice()
     void tc_functionMultiple()
     void tc_functionNotExist()
+
+test/suite Convert::
+    void tc_convertBooleanVar()
+    void tc_convertNumericVar()
+    void tc_convertCompositeVar()
+    void tc_convertCollectionVar()
 
 test/suite Block::
     void tc_block()

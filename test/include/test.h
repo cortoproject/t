@@ -25,8 +25,10 @@ extern "C" {
 #endif
 
 #include <Block.h>
+#include <Convert.h>
 #include <Function.h>
 #include <Identifier.h>
+#include <Point.h>
 
 #ifdef __cplusplus
 }
