@@ -9,9 +9,9 @@
 #include <corto/t/std/std.h>
 
 corto_void _corto_t_std_else(
-    corto_value* arg,
+    corto_string arg,
     corto_t_block* block,
-    corto_t_context* context)
+    corto_word ctx)
 {
 /* $begin(corto/t/std/else) */
 
@@ -21,9 +21,9 @@ corto_void _corto_t_std_else(
 }
 
 corto_void _corto_t_std_foreach(
-    corto_value* arg,
+    corto_string arg,
     corto_t_block* block,
-    corto_t_context* context)
+    corto_word ctx)
 {
 /* $begin(corto/t/std/foreach) */
 
@@ -33,9 +33,9 @@ corto_void _corto_t_std_foreach(
 }
 
 corto_string _corto_t_std_id(
-    corto_value* arg,
+    corto_string arg,
     corto_t_block* block,
-    corto_t_context* context)
+    corto_word ctx)
 {
 /* $begin(corto/t/std/id) */
 
@@ -45,9 +45,9 @@ corto_string _corto_t_std_id(
 }
 
 corto_void _corto_t_std_if(
-    corto_value* arg,
+    corto_string arg,
     corto_t_block* block,
-    corto_t_context* context)
+    corto_word ctx)
 {
 /* $begin(corto/t/std/if) */
 
@@ -57,21 +57,33 @@ corto_void _corto_t_std_if(
 }
 
 corto_string _corto_t_std_name(
-    corto_value* arg,
+    corto_string arg,
     corto_t_block* block,
-    corto_t_context* context)
+    corto_word ctx)
 {
 /* $begin(corto/t/std/name) */
+    corto_t_var *var = corto_t_findvar(arg, ctx);
 
-    /* << Insert implementation >> */
-
+    if (var) {
+        corto_type t = corto_value_getType(&var->value);
+        void *ptr = corto_value_getPtr(&var->value);
+        if ((var->value.kind == CORTO_OBJECT) || t->reference) {
+            corto_id id;
+            return corto_strdup(corto_nameof(id, ptr));
+        } else {
+            corto_seterr("t/std/name called on value that is not an object");
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
 /* $end */
 }
 
 corto_object _corto_t_std_parent(
-    corto_value* arg,
+    corto_string arg,
     corto_t_block* block,
-    corto_t_context* context)
+    corto_word ctx)
 {
 /* $begin(corto/t/std/parent) */
 
@@ -81,9 +93,9 @@ corto_object _corto_t_std_parent(
 }
 
 corto_void _corto_t_std_scope(
-    corto_value* arg,
+    corto_string arg,
     corto_t_block* block,
-    corto_t_context* context)
+    corto_word ctx)
 {
 /* $begin(corto/t/std/scope) */
 
@@ -93,9 +105,9 @@ corto_void _corto_t_std_scope(
 }
 
 corto_type _corto_t_std_type(
-    corto_value* arg,
+    corto_string arg,
     corto_t_block* block,
-    corto_t_context* context)
+    corto_word ctx)
 {
 /* $begin(corto/t/std/type) */
 

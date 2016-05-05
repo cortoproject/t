@@ -16,7 +16,7 @@ corto_int16 _corto_t_function_init(
     corto_parameterSet(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "arg",
-        corto_t_value_o,
+        corto_string_o,
         FALSE
     );
 
@@ -29,8 +29,8 @@ corto_int16 _corto_t_function_init(
 
     corto_parameterSet(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
-        "context",
-        corto_t_context_o,
+        "ctx",
+        corto_word_o,
         FALSE
     );
 

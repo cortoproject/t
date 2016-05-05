@@ -19,6 +19,7 @@
 extern "C" {
 #endif
 
+#include <Function.h>
 #include <Identifier.h>
 
 #ifdef __cplusplus

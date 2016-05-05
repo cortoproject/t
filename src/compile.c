@@ -9,6 +9,8 @@ typedef struct corto_t_compile_t {
     corto_t *t;
     corto_t_opbuff *currentOp;
     corto_t_importbuff *currentImport;
+    corto_t_op *stack[CORTO_T_FUNCTION_DEPTH];
+    corto_uint32 sp;
 } corto_t_compile_t;
 
 static void corto_t_newOpbuffer(corto_t_compile_t *data) {
@@ -25,6 +27,10 @@ static corto_t_op* corto_t_nextOp(corto_t_compile_t *data) {
     if (count > CORTO_T_OP_BUFF_COUNT) {
         corto_t_newOpbuffer(data);
         count = 1;
+    }
+
+    if (data->sp) {
+        data->stack[data->sp - 1]->data.function.block.length ++;
     }
 
     return &data->currentOp->ops[count - 1];
@@ -49,6 +55,15 @@ static corto_object* corto_t_nextImport(corto_t_compile_t *data) {
     return &data->currentImport->imports[count - 1];
 }
 
+static void corto_t_pushFunc(corto_t_op *op, corto_t_compile_t *data) {
+    corto_assert(op->kind == CORTO_T_FUNCTION, "pushed operation is not a function");
+    data->stack[data->sp ++] = op;
+}
+
+static void corto_t_popFunc(corto_t_compile_t *data) {
+    data->sp --;
+}
+
 static void corto_t_addText(char *start, corto_uint32 len, corto_t_compile_t *data) {
     if (len) {
         corto_t_op *op = corto_t_nextOp(data);
@@ -65,7 +80,26 @@ static void corto_t_addVar(char *start, corto_uint32 len, corto_t_compile_t *dat
     }
 }
 
-static void corto_t_slicecpy(corto_id buf, corto_t_slice slice) {
+static void corto_t_addFunc(
+    corto_t_function f,
+    corto_t_slice arg,
+    corto_t_compile_t *data)
+{
+    corto_t_op *op = corto_t_nextOp(data);
+
+    op->kind = CORTO_T_FUNCTION;
+    op->data.function.function = f;
+    op->data.function.arg = arg;
+    op->data.function.block.ops = data->currentOp;
+    op->data.function.block.start = data->currentOp->count;
+    op->data.function.block.length = 0;
+
+    if (f->requiresBlock) {
+        corto_t_pushFunc(op, data);
+    }
+}
+
+void corto_t_copySliceToString(corto_id buf, corto_t_slice slice) {
     strncpy(buf, slice.ptr, slice.len);
     buf[slice.len] = '\0';
 }
@@ -96,12 +130,17 @@ static char* corto_t_skipspace(char *start) {
 }
 
 static corto_int16 corto_t_import(corto_string import, corto_t_compile_t *data) {
+    if (corto_load(import, 0, NULL)) {
+        corto_t_err(data, "unresolved import", import);
+        goto error;
+    }
+
     corto_object o = corto_resolve(NULL, import);
 
     if (o) {
         *corto_t_nextImport(data) = o;
     } else {
-        corto_t_err(data, "unresolved import", import);
+        corto_t_err(data, "failed to load import", import);
         goto error;
     }
 
@@ -145,7 +184,7 @@ static char* corto_t_id(char *start, corto_t_compile_t *data) {
         goto error;
     }
 
-    for (ptr = start + 1; (ch = *ptr) && !isspace(ch); ptr++) {
+    for (ptr = start + 1; (ch = *ptr) && !isspace(ch) && (ch != '}'); ptr++) {
         if ((ch != '.') && !isalpha(ch) && !isdigit(ch)) {
             corto_t_err(data, "invalid identifier", start);
             break;
@@ -196,12 +235,15 @@ static corto_int16 corto_t_func(
     corto_t_function f;
     corto_id funcId;
 
-    corto_t_slicecpy(funcId, func);
+    corto_t_copySliceToString(funcId, func);
 
     f = corto_t_resolve(funcId, corto_type(corto_t_function_o), data);
     if (!f) {
+        corto_t_err(data, "unknown function", func.ptr);
         goto error;
     }
+
+    corto_t_addFunc(f, arg, data);
 
     return 0;
 error:
@@ -340,14 +382,16 @@ static char* corto_t_section_parseFunction(
     if (!end) {
         goto error;
     } else {
-        id = (corto_t_slice){start, start - end};
+        id = (corto_t_slice){start, 1 + end - start};
     }
 
     ptr = corto_t_skipspace(end + 1);
 
     /* If closing curly brace is found, there are no comparators */
     if (*ptr == CORTO_T_CLOSE) {
-        corto_t_func(func, id, data);
+        if (corto_t_func(func, id, data)) {
+            goto error;
+        }
 
     /* If section doesn't close, expect comparator */
     } else if ((ptr[0] == 'i') && (ptr[1] == 's')) {
@@ -443,7 +487,11 @@ corto_t* corto_t_compile(corto_string template) {
     t->template = corto_strdup(template);
 
     /* Always import std */
-    corto_t_import("/corto/t/std", &data);
+    if (corto_t_import("corto/t/std", &data)) {
+        corto_dealloc(t->template);
+        corto_dealloc(t);
+        goto error;
+    }
 
     for (ptr = template; (ch = *ptr); ptr ++) {
         switch(ch) {

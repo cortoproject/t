@@ -20,3 +20,13 @@ test/suite Identifier::
     void tc_identifierBracesInvalid()
     void tc_identifierEscape()
     void tc_identifierEscapeEscape()
+
+test/suite Function::
+    void tc_function()
+    void tc_functionWhitespace1()
+    void tc_functionWhitespace2()
+    void tc_functionWhitespace3()
+    void tc_functionEmbed()
+    void tc_functionTwice()
+    void tc_functionMultiple()
+    void tc_functionNotExist()

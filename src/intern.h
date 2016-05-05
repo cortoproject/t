@@ -5,6 +5,7 @@ typedef struct corto_t_opbuff corto_t_opbuff;
 typedef enum corto_t_opKind {
     CORTO_T_TEXT,
     CORTO_T_VAR,
+    CORTO_T_FUNCTION
 } corto_t_opKind;
 
 /* A slice of the template string */
@@ -34,7 +35,7 @@ typedef struct corto_t_op {
             corto_t_function function;
             corto_t_slice arg;
             corto_t_block block;
-        } func;
+        } function;
     } data;
 } corto_t_op;
 
@@ -63,4 +64,5 @@ struct corto_t {
     corto_t_importbuff imports;
 };
 
+void corto_t_copySliceToString(corto_id buf, corto_t_slice slice);
 void corto_t_print(corto_t *t);

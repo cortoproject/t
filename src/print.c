@@ -29,6 +29,11 @@ static void corto_t_printop(corto_t_op *op) {
         corto_t_printslice(op->data.var.key);
         printf("'\n");
         break;
+    case CORTO_T_FUNCTION:
+        printf("> FUNC '%s' '", corto_idof(op->data.function.function));
+        corto_t_printslice(op->data.function.arg);
+        printf("'\n");
+        break;
     }
 }
 
@@ -38,7 +43,7 @@ void corto_t_print(corto_t *t) {
     printf("## Compile '%s'\n", t->template);
     do {
         corto_uint32 i = 0;
-        while (i < current->opCount) {
+        while (i < current->count) {
             corto_t_op *op = &current->ops[i];
             corto_t_printop(op);
             i ++;
