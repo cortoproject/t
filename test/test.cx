@@ -30,3 +30,8 @@ test/suite Function::
     void tc_functionTwice()
     void tc_functionMultiple()
     void tc_functionNotExist()
+
+test/suite Block::
+    void tc_block()
+    void tc_blockNested1()
+    void tc_blockNested2()

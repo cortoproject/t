@@ -50,8 +50,33 @@ corto_void _corto_t_std_if(
     corto_word ctx)
 {
 /* $begin(corto/t/std/if) */
+    corto_t_var *var = corto_t_findvar(arg, ctx);
+    corto_bool result = FALSE;
 
-    /* << Insert implementation >> */
+    if (var) {
+        corto_type t = corto_value_getType(&var->value);
+        void *ptr = corto_value_getPtr(&var->value);
+
+        if (corto_instanceof(corto_boolean_o, t)) {
+            result = *(corto_bool*)ptr;
+        } else if (var->value.kind == CORTO_OBJECT) {
+            result = ptr != NULL;
+        } else if (t->reference) {
+            result = *(corto_object*)ptr != NULL;
+        } else if (t->kind == CORTO_PRIMITIVE) {
+            corto_convert(t, ptr, corto_bool_o, &result);
+        } else {
+            /* Cannot reduce value to boolean */
+            corto_seterr("cannot convert value of type '%s' to boolean",
+                corto_fullpath(NULL, t));
+        }
+    } else {
+        /* If variable doesn't exist, assume FALSE */
+    }
+
+    if (result) {
+        corto_t_block_run(block, ctx);
+    }
 
 /* $end */
 }

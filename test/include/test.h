@@ -8,6 +8,11 @@
 
 #include <corto/corto.h>
 #include <_interface.h>
+/* $header() */
+#include <corto/t/t.h>
+corto_t_var* findvar(corto_string key, void *data);
+/* $end */
+
 #include <_type.h>
 #include <_api.h>
 #include <_meta.h>
@@ -19,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <Block.h>
 #include <Function.h>
 #include <Identifier.h>
 

@@ -16,9 +16,10 @@ typedef struct corto_t_slice {
 
 /* Function block */
 struct corto_t_block {
-    corto_t_opbuff *ops;
-    corto_uint32 start;
-    corto_uint32 length;
+    corto_t_opbuff *startBuff;
+    corto_uint32 startOp;
+    corto_t_opbuff *stopBuff;
+    corto_uint32 stopOp;
 };
 
 /* Single template operation */

@@ -8,6 +8,21 @@
 
 #include <test.h>
 
+/* $header() */
+corto_t_var* findvar(corto_string key, void *data) {
+    corto_t_var *result = NULL;
+    corto_t_var *vars = data;
+
+    for (result = vars; result->key; result ++) {
+        if (!strcmp(result->key, key)) {
+            break;
+        }
+    }
+
+    return result->key ? result : NULL;
+}
+/* $end */
+
 int testMain(int argc, char* argv[]) {
 /* $begin(main) */
     int result = 0;

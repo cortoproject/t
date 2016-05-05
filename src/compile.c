@@ -13,6 +13,25 @@ typedef struct corto_t_compile_t {
     corto_uint32 sp;
 } corto_t_compile_t;
 
+static void corto_t_err(corto_t_compile_t *t, char *msg, char *start) {
+    char buff[20];
+    char *ptr, *bptr = buff, ch;
+
+    for(ptr = start; (ch = *ptr) && ((ptr - start) < 16); ptr++) {
+        *bptr = ch;
+        bptr++;
+    }
+
+    if (ch) {
+        *(bptr++) = '.';
+        *(bptr++) = '.';
+        *(bptr++) = '.';
+    }
+    *(bptr++) = '\0';
+
+    corto_seterr("%s near '%s'", msg, buff);
+}
+
 static void corto_t_newOpbuffer(corto_t_compile_t *data) {
     corto_t_opbuff *ob = corto_alloc(sizeof(corto_t_opbuff));
     ob->count = 0;
@@ -27,10 +46,6 @@ static corto_t_op* corto_t_nextOp(corto_t_compile_t *data) {
     if (count > CORTO_T_OP_BUFF_COUNT) {
         corto_t_newOpbuffer(data);
         count = 1;
-    }
-
-    if (data->sp) {
-        data->stack[data->sp - 1]->data.function.block.length ++;
     }
 
     return &data->currentOp->ops[count - 1];
@@ -61,6 +76,11 @@ static void corto_t_pushFunc(corto_t_op *op, corto_t_compile_t *data) {
 }
 
 static void corto_t_popFunc(corto_t_compile_t *data) {
+    corto_t_op *op = data->stack[data->sp - 1];
+
+    op->data.function.block.stopBuff = data->currentOp;
+    op->data.function.block.stopOp = data->currentOp->count;
+
     data->sp --;
 }
 
@@ -72,12 +92,25 @@ static void corto_t_addText(char *start, corto_uint32 len, corto_t_compile_t *da
     }
 }
 
-static void corto_t_addVar(char *start, corto_uint32 len, corto_t_compile_t *data) {
+static corto_int16 corto_t_addVar(char *start, corto_uint32 len, corto_t_compile_t *data) {
     if (len) {
-        corto_t_op *op = corto_t_nextOp(data);
-        op->kind = CORTO_T_VAR;
-        op->data.var.key = (corto_t_slice){start, len};
+        if ((len == 3) && (!memcmp(start, "end", 3))) {
+            if (data->sp) {
+                corto_t_popFunc(data);
+            } else {
+                corto_t_err(data, "end token without block", start);
+                goto error;
+            }
+        } else {
+            corto_t_op *op = corto_t_nextOp(data);
+            op->kind = CORTO_T_VAR;
+            op->data.var.key = (corto_t_slice){start, len};
+        }
     }
+
+    return 0;
+error:
+    return -1;
 }
 
 static void corto_t_addFunc(
@@ -90,9 +123,10 @@ static void corto_t_addFunc(
     op->kind = CORTO_T_FUNCTION;
     op->data.function.function = f;
     op->data.function.arg = arg;
-    op->data.function.block.ops = data->currentOp;
-    op->data.function.block.start = data->currentOp->count;
-    op->data.function.block.length = 0;
+    op->data.function.block.startBuff = data->currentOp;
+    op->data.function.block.startOp = data->currentOp->count;
+    op->data.function.block.stopBuff = NULL;
+    op->data.function.block.stopOp = 0;
 
     if (f->requiresBlock) {
         corto_t_pushFunc(op, data);
@@ -102,25 +136,6 @@ static void corto_t_addFunc(
 void corto_t_copySliceToString(corto_id buf, corto_t_slice slice) {
     strncpy(buf, slice.ptr, slice.len);
     buf[slice.len] = '\0';
-}
-
-static void corto_t_err(corto_t_compile_t *t, char *msg, char *start) {
-    char buff[20];
-    char *ptr, *bptr = buff, ch;
-
-    for(ptr = start; (ch = *ptr) && ((ptr - start) < 16); ptr++) {
-        *bptr = ch;
-        bptr++;
-    }
-
-    if (ch) {
-        *(bptr++) = '.';
-        *(bptr++) = '.';
-        *(bptr++) = '.';
-    }
-    *(bptr++) = '\0';
-
-    corto_seterr("%s near '%s'", msg, buff);
 }
 
 static char* corto_t_skipspace(char *start) {

@@ -17,25 +17,35 @@ typedef struct corto_t_run_t {
     corto_uint32 prevOp;
 } corto_t_run_t;
 
-static void corto_t_runop(corto_t_op *op, corto_t_run_t *data);
+static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data);
 
 corto_int16 corto_t_run_ops(
-    corto_int32 length,
+    corto_t_opbuff *untilBuff,
+    corto_uint32 untilOp,
     corto_t_run_t *data)
 {
-    corto_uint32 count = 0;
-
     do {
-        while ((data->op < data->current->count) && ((length < 0) || (count < length))) {
+        while ((data->op < data->current->count) &&
+               (!untilBuff || ((data->current != untilBuff) ||
+                               (data->op != untilOp))))
+        {
             corto_t_op *op = &data->current->ops[data->op];
-            corto_t_runop(op, data);
-            data->op ++;
-            count ++;
+            if (!corto_t_runop(op, data)) {
+                data->op ++;
+            }
         }
         data->op = 0;
     } while ((data->current = data->current->next));
 
     return 0;
+}
+
+static void corto_t_block_jump(
+    corto_t_block *b,
+    corto_t_run_t *data)
+{
+    data->current = b->stopBuff;
+    data->op = b->stopOp;
 }
 
 corto_int16 corto_t_block_run(
@@ -46,7 +56,9 @@ corto_int16 corto_t_block_run(
     corto_t_opbuff *current = data->current;
     corto_uint32 op = data->op;
 
-    corto_int16 result = corto_t_run_ops(b->length, data);
+    data->current = b->startBuff;
+    data->op = b->startOp;
+    corto_int16 result = corto_t_run_ops(b->stopBuff, b->stopOp, data);
 
     /* Restore position */
     data->current = current;
@@ -55,7 +67,9 @@ corto_int16 corto_t_block_run(
     return result;
 }
 
-static void corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
+/* Returns TRUE if operation manually set the program counter */
+static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
+    corto_bool jumped = FALSE;
 
     switch(op->kind) {
     case CORTO_T_TEXT: {
@@ -131,15 +145,23 @@ static void corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
                 }
             }
         }
+
+        if (f->requiresBlock) {
+            corto_t_block_jump(&op->data.function.block, data);
+            jumped = TRUE;
+        }
+
         break;
     }
     }
+
+    return jumped;
 }
 
 corto_string corto_t_run(corto_t *t, corto_t_context *ctx) {
     corto_t_run_t data = {t, CORTO_BUFFER_INIT, ctx, &t->ops, 0};
 
-    corto_t_run_ops(-1, &data);
+    corto_t_run_ops(NULL, 0, &data);
 
     return corto_buffer_str(&data.buf);
 }
