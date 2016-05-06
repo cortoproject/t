@@ -1,9 +1,9 @@
 # /corto/t/std
-### else
+### each
 #### arg
 #### block
 #### ctx
-### foreach
+### else
 #### arg
 #### block
 #### ctx
@@ -13,6 +13,10 @@
 #### ctx
 #### Returns
 ### if
+#### arg
+#### block
+#### ctx
+### ifn
 #### arg
 #### block
 #### ctx

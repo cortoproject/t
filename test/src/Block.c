@@ -19,7 +19,7 @@ corto_void _test_Block_tc_block(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("true: ${if t}Yes!${end} false:${if f}No!${end}");
@@ -47,7 +47,7 @@ corto_void _test_Block_tc_blockNested1(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("true: ${if t}Yes! false:${if f}No!${end}${end}");
@@ -74,7 +74,7 @@ corto_void _test_Block_tc_blockNested2(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("false: ${if f}No! true:${if t}Yes!${end}${end}");

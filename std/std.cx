@@ -7,5 +7,6 @@ t/function type: requiresBlock=false returnType=lang/type
 
 t/function @scope: requiresBlock=true
 t/function @if: requiresBlock=true
+t/function ifn: requiresBlock=true
 t/function @else: requiresBlock=true
-t/function foreach: requiresBlock=true
+t/function each: requiresBlock=true

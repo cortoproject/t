@@ -2,24 +2,27 @@
 #include "corto/t/t.h"
 #include "intern.h"
 
+typedef struct corto_t_varbuff {
+    corto_t_var vars[CORTO_T_VAR_BUFF_COUNT];
+    corto_uint32 count;
+    struct corto_t_varbuff *next;
+} corto_t_varbuff;
+
 typedef struct corto_t_run_t {
     corto_t *t;
     corto_buffer buf;
-    corto_t_context *ctx;
+    corto_t_frame *globals;
+    corto_t_frame *stack[CORTO_T_FRAME_DEPTH];
+    corto_uint32 sp;
     corto_t_opbuff *current;
     corto_uint32 op;
-
-    /* After executing a block, current and op jump back to their previous
-     * positions. These members cache the values before restoring current and op
-     * so that a program can efficiently jump to the end of a block if required.
-     */
-    corto_t_opbuff *prevCurrent;
-    corto_uint32 prevOp;
+    corto_t_varbuff vars;
 } corto_t_run_t;
 
 static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data);
 
-corto_int16 corto_t_run_ops(
+/* Run a number of operations until specified operation is encountered */
+static corto_int16 corto_t_run_ops(
     corto_t_opbuff *untilBuff,
     corto_uint32 untilOp,
     corto_t_run_t *data)
@@ -40,6 +43,7 @@ corto_int16 corto_t_run_ops(
     return 0;
 }
 
+/* Skip over a block */
 static void corto_t_block_jump(
     corto_t_block *b,
     corto_t_run_t *data)
@@ -48,16 +52,19 @@ static void corto_t_block_jump(
     data->op = b->stopOp;
 }
 
+/* Run a single code block */
 corto_int16 corto_t_block_run(
     corto_t_block *b,
     corto_word ctx)
 {
     corto_t_run_t *data = (corto_t_run_t*)ctx;
+
+    /* Cache current position and set op buffer and pc to block */
     corto_t_opbuff *current = data->current;
     corto_uint32 op = data->op;
-
     data->current = b->startBuff;
     data->op = b->startOp;
+
     corto_int16 result = corto_t_run_ops(b->stopBuff, b->stopOp, data);
 
     /* Restore position */
@@ -85,7 +92,7 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
         memcpy(key, op->data.var.key.ptr, op->data.var.key.len);
         key[op->data.var.key.len] = '\0';
 
-        corto_t_var *v = data->ctx->findvar(key, data->ctx->data);
+        corto_t_var *v = corto_t_findvar(key, (corto_word)data);
         if (v) {
             void *value = corto_value_getPtr(&v->value);
             if (corto_instanceof(corto_text_o, corto_value_getType(&v->value))) {
@@ -158,8 +165,10 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
     return jumped;
 }
 
-corto_string corto_t_run(corto_t *t, corto_t_context *ctx) {
-    corto_t_run_t data = {t, CORTO_BUFFER_INIT, ctx, &t->ops, 0};
+corto_string corto_t_run(corto_t *t, corto_t_frame *globals) {
+    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, 0, &t->ops, 0};
+    data.vars.count = NULL;
+    data.vars.next = 0;
 
     corto_t_run_ops(NULL, 0, &data);
 
@@ -168,5 +177,44 @@ corto_string corto_t_run(corto_t *t, corto_t_context *ctx) {
 
 corto_t_var* corto_t_findvar(corto_string var, corto_word ctx) {
     corto_t_run_t *data = (corto_t_run_t*)ctx;
-    return data->ctx->findvar(var, data->ctx->data);
+    corto_t_var *result = NULL;
+
+    if (data->sp) {
+        do {
+            corto_t_frame *stack = data->stack[data->sp - 1];
+            result = stack->findvar(var, stack->data);
+        } while (!result && --data->sp);
+    }
+
+    if (!result) {
+        result = data->globals->findvar(var, data->globals->data);
+    }
+
+    return result;
+}
+
+corto_int16 corto_t_pushframe(corto_t_frame *frame, corto_word ctx) {
+    corto_t_run_t *data = (corto_t_run_t*)ctx;
+    if (data->sp == CORTO_T_FRAME_DEPTH) {
+        corto_seterr("maximum number of frames exceeded");
+        goto error;
+    }
+    data->stack[data->sp ++] = frame;
+
+    return 0;
+error:
+    return -1;
+}
+
+void corto_t_popframe(corto_word ctx) {
+    corto_t_run_t *data = (corto_t_run_t*)ctx;
+    data->sp --;
+}
+
+corto_t_var* corto_t_finddefault(corto_string var, void *data) {
+    if (!var || !strlen(var) || !strcmp(var, ".")) {
+        return (corto_t_var*)data;
+    } else {
+        return NULL;
+    }
 }

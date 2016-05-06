@@ -19,7 +19,7 @@ corto_void _test_Function_tc_function(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${name var}");
@@ -47,7 +47,7 @@ corto_void _test_Function_tc_functionEmbed(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello ${name var}!");
@@ -77,7 +77,7 @@ corto_void _test_Function_tc_functionMultiple(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello ${name var1} ${name var2}!");
@@ -118,7 +118,7 @@ corto_void _test_Function_tc_functionTwice(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello ${name var} ${name var}!");
@@ -146,7 +146,7 @@ corto_void _test_Function_tc_functionWhitespace1(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${  name var}");
@@ -174,7 +174,7 @@ corto_void _test_Function_tc_functionWhitespace2(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${name var  }");
@@ -202,7 +202,7 @@ corto_void _test_Function_tc_functionWhitespace3(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${  name var  }");

@@ -2,7 +2,7 @@
 
 native/type value: "corto_value*"
 native/type block: "corto_t_block*"
-native/type context: "corto_t_context*"
+native/type context: "corto_t_frame*"
 
 procedure function: base=function ::
     member requiresBlock: bool

@@ -18,7 +18,7 @@ corto_void _test_Convert_tc_convertBooleanVar(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("$var");
@@ -45,7 +45,7 @@ corto_void _test_Convert_tc_convertCollectionVar(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("$var");
@@ -72,7 +72,7 @@ corto_void _test_Convert_tc_convertCompositeVar(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("$var");
@@ -99,7 +99,7 @@ corto_void _test_Convert_tc_convertNumericVar(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("$var");

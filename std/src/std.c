@@ -8,48 +8,13 @@
 
 #include <corto/t/std/std.h>
 
-corto_void _corto_t_std_else(
+/* $header() */
+static corto_void corto_t_std_if_intern(
     corto_string arg,
+    corto_bool invert,
     corto_t_block* block,
     corto_word ctx)
 {
-/* $begin(corto/t/std/else) */
-
-    /* << Insert implementation >> */
-
-/* $end */
-}
-
-corto_void _corto_t_std_foreach(
-    corto_string arg,
-    corto_t_block* block,
-    corto_word ctx)
-{
-/* $begin(corto/t/std/foreach) */
-
-    /* << Insert implementation >> */
-
-/* $end */
-}
-
-corto_string _corto_t_std_id(
-    corto_string arg,
-    corto_t_block* block,
-    corto_word ctx)
-{
-/* $begin(corto/t/std/id) */
-
-    /* << Insert implementation >> */
-
-/* $end */
-}
-
-corto_void _corto_t_std_if(
-    corto_string arg,
-    corto_t_block* block,
-    corto_word ctx)
-{
-/* $begin(corto/t/std/if) */
     corto_t_var *var = corto_t_findvar(arg, ctx);
     corto_bool result = FALSE;
 
@@ -74,9 +39,102 @@ corto_void _corto_t_std_if(
         /* If variable doesn't exist, assume FALSE */
     }
 
-    if (result) {
+    if ((!invert && result) || (invert && !result)) {
         corto_t_block_run(block, ctx);
     }
+}
+
+typedef struct corto_t_ser_t {
+    corto_t_block *block;
+    corto_word ctx;
+} corto_t_ser_t;
+
+corto_int16 corto_t_ser_item(
+    corto_serializer s,
+    corto_value *info,
+    void *userData)
+{
+    corto_t_ser_t *data = userData;
+    corto_t_var v = {"", *info};
+
+    corto_t_frame f = {corto_t_finddefault, &v};
+
+    corto_t_pushframe(&f, data->ctx);
+    corto_t_block_run(data->block, data->ctx);
+    corto_t_popframe(data->ctx);
+
+    return 0;
+}
+
+struct corto_serializer_s corto_t_ser() {
+    struct corto_serializer_s s;
+    corto_serializerInit(&s);
+    s.access = CORTO_PRIVATE | CORTO_LOCAL;
+    s.accessKind = CORTO_NOT;
+    s.metaprogram[CORTO_MEMBER] = corto_t_ser_item;
+    s.metaprogram[CORTO_ELEMENT] = corto_t_ser_item;
+    return s;
+}
+/* $end */
+
+corto_void _corto_t_std_each(
+    corto_string arg,
+    corto_t_block* block,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/each) */
+    struct corto_serializer_s s = corto_t_ser();
+    corto_t_var *var = corto_t_findvar(arg, ctx);
+    corto_t_ser_t walkData = {block, ctx};
+
+    corto_serializeValue(&s, &var->value, &walkData);
+/* $end */
+}
+
+corto_void _corto_t_std_else(
+    corto_string arg,
+    corto_t_block* block,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/else) */
+
+    /* << Insert implementation >> */
+
+/* $end */
+}
+
+corto_string _corto_t_std_id(
+    corto_string arg,
+    corto_t_block* block,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/id) */
+
+    /* << Insert implementation >> */
+
+/* $end */
+}
+
+corto_void _corto_t_std_if(
+    corto_string arg,
+    corto_t_block* block,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/if) */
+
+    corto_t_std_if_intern(arg, FALSE, block, ctx);
+
+/* $end */
+}
+
+corto_void _corto_t_std_ifn(
+    corto_string arg,
+    corto_t_block* block,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/ifn) */
+
+    corto_t_std_if_intern(arg, TRUE, block, ctx);
 
 /* $end */
 }

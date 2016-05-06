@@ -3,4 +3,6 @@ PACKAGE = 'corto/t'
 
 PREFIX = 'corto/t'
 
+COMPONENTS = [] << "std"
+
 require "#{ENV['CORTO_BUILD']}/package"

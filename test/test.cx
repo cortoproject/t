@@ -46,3 +46,8 @@ test/suite Block::
     void tc_block()
     void tc_blockNested1()
     void tc_blockNested2()
+
+test/suite DefaultVar::
+    void tc_default()
+    void tc_defaultBraces()
+    void tc_defaultDot()

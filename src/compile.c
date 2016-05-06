@@ -9,7 +9,7 @@ typedef struct corto_t_compile_t {
     corto_t *t;
     corto_t_opbuff *currentOp;
     corto_t_importbuff *currentImport;
-    corto_t_op *stack[CORTO_T_FUNCTION_DEPTH];
+    corto_t_op *stack[CORTO_T_FRAME_DEPTH];
     corto_uint32 sp;
 } corto_t_compile_t;
 
@@ -70,9 +70,16 @@ static corto_object* corto_t_nextImport(corto_t_compile_t *data) {
     return &data->currentImport->imports[count - 1];
 }
 
-static void corto_t_pushFunc(corto_t_op *op, corto_t_compile_t *data) {
+static corto_int16 corto_t_pushFunc(corto_t_op *op, corto_t_compile_t *data) {
     corto_assert(op->kind == CORTO_T_FUNCTION, "pushed operation is not a function");
+    if (data->sp == CORTO_T_FRAME_DEPTH) {
+        corto_seterr("block exceeds maximum nesting level");
+        goto error;
+    }
     data->stack[data->sp ++] = op;
+    return 0;
+error:
+    return -1;
 }
 
 static void corto_t_popFunc(corto_t_compile_t *data) {
@@ -93,19 +100,18 @@ static void corto_t_addText(char *start, corto_uint32 len, corto_t_compile_t *da
 }
 
 static corto_int16 corto_t_addVar(char *start, corto_uint32 len, corto_t_compile_t *data) {
-    if (len) {
-        if ((len == 3) && (!memcmp(start, "end", 3))) {
-            if (data->sp) {
-                corto_t_popFunc(data);
-            } else {
-                corto_t_err(data, "end token without block", start);
-                goto error;
-            }
+
+    if ((len == 3) && (!memcmp(start, "end", 3))) {
+        if (data->sp) {
+            corto_t_popFunc(data);
         } else {
-            corto_t_op *op = corto_t_nextOp(data);
-            op->kind = CORTO_T_VAR;
-            op->data.var.key = (corto_t_slice){start, len};
+            corto_t_err(data, "end token without block", start);
+            goto error;
         }
+    } else {
+        corto_t_op *op = corto_t_nextOp(data);
+        op->kind = CORTO_T_VAR;
+        op->data.var.key = (corto_t_slice){start, len};
     }
 
     return 0;
@@ -113,7 +119,7 @@ error:
     return -1;
 }
 
-static void corto_t_addFunc(
+static corto_int16 corto_t_addFunc(
     corto_t_function f,
     corto_t_slice arg,
     corto_t_compile_t *data)
@@ -129,8 +135,14 @@ static void corto_t_addFunc(
     op->data.function.block.stopOp = 0;
 
     if (f->requiresBlock) {
-        corto_t_pushFunc(op, data);
+        if (corto_t_pushFunc(op, data)) {
+            goto error;
+        }
     }
+
+    return 0;
+error:
+    return -1;
 }
 
 void corto_t_copySliceToString(corto_id buf, corto_t_slice slice) {
@@ -258,7 +270,9 @@ static corto_int16 corto_t_func(
         goto error;
     }
 
-    corto_t_addFunc(f, arg, data);
+    if (corto_t_addFunc(f, arg, data)) {
+        goto error;
+    }
 
     return 0;
 error:

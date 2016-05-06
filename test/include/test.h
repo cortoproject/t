@@ -26,6 +26,7 @@ extern "C" {
 
 #include <Block.h>
 #include <Convert.h>
+#include <DefaultVar.h>
 #include <Function.h>
 #include <Identifier.h>
 #include <Point.h>

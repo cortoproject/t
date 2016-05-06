@@ -23,17 +23,17 @@ extern "C" {
 #endif
 
 
+CORTO_T_STD_EXPORT corto_void _corto_t_std_each(
+    corto_string arg,
+    corto_t_block* block,
+    corto_word ctx);
+#define corto_t_std_each(arg, block, ctx) _corto_t_std_each(arg, block, ctx)
+
 CORTO_T_STD_EXPORT corto_void _corto_t_std_else(
     corto_string arg,
     corto_t_block* block,
     corto_word ctx);
 #define corto_t_std_else(arg, block, ctx) _corto_t_std_else(arg, block, ctx)
-
-CORTO_T_STD_EXPORT corto_void _corto_t_std_foreach(
-    corto_string arg,
-    corto_t_block* block,
-    corto_word ctx);
-#define corto_t_std_foreach(arg, block, ctx) _corto_t_std_foreach(arg, block, ctx)
 
 CORTO_T_STD_EXPORT corto_string _corto_t_std_id(
     corto_string arg,
@@ -46,6 +46,12 @@ CORTO_T_STD_EXPORT corto_void _corto_t_std_if(
     corto_t_block* block,
     corto_word ctx);
 #define corto_t_std_if(arg, block, ctx) _corto_t_std_if(arg, block, ctx)
+
+CORTO_T_STD_EXPORT corto_void _corto_t_std_ifn(
+    corto_string arg,
+    corto_t_block* block,
+    corto_word ctx);
+#define corto_t_std_ifn(arg, block, ctx) _corto_t_std_ifn(arg, block, ctx)
 
 CORTO_T_STD_EXPORT corto_string _corto_t_std_name(
     corto_string arg,

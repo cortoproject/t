@@ -18,7 +18,7 @@ corto_void _test_Identifier_tc_identifier(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("$var");
@@ -44,7 +44,7 @@ corto_void _test_Identifier_tc_identifierBraces(
         {"var", corto_value_value(corto_string_o, &v)},
         {NULL}
     };
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${var}");
@@ -71,7 +71,7 @@ corto_void _test_Identifier_tc_identifierBracesEmbed(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello $var!");
@@ -98,7 +98,7 @@ corto_void _test_Identifier_tc_identifierBracesEmbedNotExist(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello ${foo}!");
@@ -140,7 +140,7 @@ corto_void _test_Identifier_tc_identifierBracesMultiple(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello ${var1} ${var2}!");
@@ -167,7 +167,7 @@ corto_void _test_Identifier_tc_identifierBracesNotExist(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${foo}");
@@ -194,7 +194,7 @@ corto_void _test_Identifier_tc_identifierBracesTwice(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello ${var} ${var}!");
@@ -221,7 +221,7 @@ corto_void _test_Identifier_tc_identifierBracesWhitespace1(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${  var}");
@@ -248,7 +248,7 @@ corto_void _test_Identifier_tc_identifierBracesWhitespace2(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${var  }");
@@ -275,7 +275,7 @@ corto_void _test_Identifier_tc_identifierBracesWhitespace3(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("${  var  }");
@@ -302,7 +302,7 @@ corto_void _test_Identifier_tc_identifierEmbed(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello $var!");
@@ -329,7 +329,7 @@ corto_void _test_Identifier_tc_identifierEmbedNotExist(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello $foo!");
@@ -356,7 +356,7 @@ corto_void _test_Identifier_tc_identifierEscape(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello \\$var!");
@@ -383,7 +383,7 @@ corto_void _test_Identifier_tc_identifierEscapeEscape(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello \\\\$var!");
@@ -425,7 +425,7 @@ corto_void _test_Identifier_tc_identifierMultiple(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello $var1 $var2!");
@@ -452,7 +452,7 @@ corto_void _test_Identifier_tc_identifierNotExist(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("$foo");
@@ -479,7 +479,7 @@ corto_void _test_Identifier_tc_identifierTwice(
         {NULL}
     };
 
-    corto_t_context ctx = {findvar, vars};
+    corto_t_frame ctx = {findvar, vars};
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello ${var} ${var}!");
