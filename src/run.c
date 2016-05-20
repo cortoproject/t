@@ -13,6 +13,7 @@ typedef struct corto_t_run_t {
     corto_buffer buf;
     corto_t_frame *globals;
     corto_t_frame *stack[CORTO_T_FRAME_DEPTH];
+    corto_value lastResult; /* For chaining functions */
     corto_uint32 sp;
     corto_t_opbuff *current;
     corto_uint32 op;
@@ -131,14 +132,60 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
             result,
             arg,
             f->requiresBlock ? &op->data.function.block : NULL,
+            f->chain ? &data->lastResult : NULL,
             data);
 
+        /* Free last result */
+        if (corto_value_getPtr(&data->lastResult)) {
+            corto_type t = corto_value_getType(&data->lastResult);
+            void *ptr = corto_value_getPtr(&data->lastResult);
+            if (ptr) {
+                if (t->kind == CORTO_PRIMITIVE) {
+                    if (corto_primitive(t)->kind == CORTO_TEXT) {
+                        if (*(corto_string*)ptr) {
+                            corto_dealloc(*(corto_string*)ptr);
+                        }
+                    }
+                } else if (t->reference) {
+                    if (*(corto_object*)ptr) {
+                        corto_release(*(corto_object*)ptr);
+                    }
+                } else {
+                    corto_deinitp(ptr, t);
+                    corto_dealloc(ptr);
+                }
+            }
+
+            /* Reset lastResult */
+            data->lastResult = corto_value_value(NULL, NULL);
+        }
+
+        if (returnType && op->data.function.keepResult) {
+            void *ptr = NULL;
+            data->lastResult = corto_value_value(returnType, NULL);
+
+            /* Use 64-bit storage of value object to store scalar values */
+            if ((returnType->kind == CORTO_PRIMITIVE) || returnType->reference) {
+                ptr = &data->lastResult.is.value.storage;
+                memcpy(ptr, result, corto_type_sizeof(returnType));
+
+            /* Allocate on heap for non-scalar/reference values */
+            } else {
+                ptr = corto_calloc(corto_type_sizeof(returnType));
+                corto_copyp(ptr, returnType, result);
+            }
+
+            data->lastResult.is.value.v = ptr;
+        }
+
         /* Append returnvalue of function to buffer */
-        if (returnType) {
+        if (returnType && corto_t_function(f)->echo) {
             if (corto_instanceof(corto_text_o, returnType)) {
                 if (*(corto_string*)result) {
                     corto_buffer_appendstr(&data->buf, *(corto_string*)result);
-                    corto_dealloc(*(corto_string*)result);
+                    if (!op->data.function.keepResult) {
+                        corto_dealloc(*(corto_string*)result);
+                    }
                 } else {
                     corto_buffer_appendstr(&data->buf, "");
                 }
@@ -166,13 +213,20 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 }
 
 corto_string corto_t_run(corto_t *t, corto_t_frame *globals) {
-    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, 0, &t->ops, 0};
-    data.vars.count = NULL;
+    corto_string result = NULL;
+    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, {0}, 0, &t->ops, 0};
+    data.vars.count = 0;
     data.vars.next = 0;
+    data.lastResult = corto_value_value(NULL, NULL);
 
     corto_t_run_ops(NULL, 0, &data);
 
-    return corto_buffer_str(&data.buf);
+    /* Never return NULL */
+    if (!(result = corto_buffer_str(&data.buf))) {
+        result = corto_strdup("");
+    }
+
+    return result;
 }
 
 corto_t_var* corto_t_findvar(corto_string var, corto_word ctx) {

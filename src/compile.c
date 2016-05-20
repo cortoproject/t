@@ -70,6 +70,32 @@ static corto_object* corto_t_nextImport(corto_t_compile_t *data) {
     return &data->currentImport->imports[count - 1];
 }
 
+static corto_object corto_t_resolve(
+    corto_string id,
+    corto_type t,
+    corto_t_compile_t *data)
+{
+    corto_t_importbuff *buf = &data->t->imports;
+    corto_uint32 i = 0;
+    corto_object result = NULL;
+
+    do {
+        while (!result && (i < buf->count)) {
+            corto_object op = buf->imports[i];
+            result = corto_lookup(op, id);
+            if (result && !corto_instanceof(t, result)) {
+                corto_t_err(data, "unexpected type", id);
+                goto error;
+            }
+            i ++;
+        }
+    } while (!result && (buf = buf->next));
+
+    return result;
+error:
+    return NULL;
+}
+
 static corto_int16 corto_t_pushFunc(corto_t_op *op, corto_t_compile_t *data) {
     corto_assert(op->kind == CORTO_T_FUNCTION, "pushed operation is not a function");
     if (data->sp == CORTO_T_FRAME_DEPTH) {
@@ -99,7 +125,60 @@ static void corto_t_addText(char *start, corto_uint32 len, corto_t_compile_t *da
     }
 }
 
-static corto_int16 corto_t_addVar(char *start, corto_uint32 len, corto_t_compile_t *data) {
+static corto_int16 corto_t_addFunc(
+    corto_t_function f,
+    corto_t_slice arg,
+    corto_t_compile_t *data)
+{
+    if (f->chain) {
+        if (data->sp) {
+            corto_t_op *op = data->stack[data->sp - 1];
+            corto_t_function cur = op->data.function.function;
+            if (f->chain == corto_function(cur)->returnType) {
+                /* Take current function from stack */
+                corto_t_popFunc(data);
+
+                /* Indicate that previous function is part of a chain */
+                op->data.function.keepResult = TRUE;
+            } else {
+                corto_seterr("cannot match types of '%s' with '%s' (%s vs. %s)",
+                    corto_idof(cur),
+                    corto_idof(f),
+                    corto_fullpath(NULL, corto_function(cur)->returnType),
+                    corto_fullpath(NULL, corto_function(f)->returnType));
+                goto error;
+            }
+        } else {
+            corto_seterr("dangling '%s'", corto_idof(f));
+            goto error;
+        }
+    }
+
+    corto_t_op *op = corto_t_nextOp(data);
+    op->kind = CORTO_T_FUNCTION;
+    op->data.function.function = f;
+    op->data.function.arg = arg;
+    op->data.function.block.startBuff = data->currentOp;
+    op->data.function.block.startOp = data->currentOp->count;
+    op->data.function.block.stopBuff = NULL;
+    op->data.function.block.stopOp = 0;
+    op->data.function.keepResult = FALSE;
+
+    if (f->requiresBlock) {
+        if (corto_t_pushFunc(op, data)) {
+            goto error;
+        }
+    }
+
+    return 0;
+error:
+    return -1;
+}
+
+static corto_int16 corto_t_addVar(corto_string start, corto_uint32 len, corto_t_compile_t *data) {
+    corto_id varId;
+    corto_t_function f;
+    corto_t_copySliceToString(varId, (corto_t_slice){start, len});
 
     if ((len == 3) && (!memcmp(start, "end", 3))) {
         if (data->sp) {
@@ -108,36 +187,14 @@ static corto_int16 corto_t_addVar(char *start, corto_uint32 len, corto_t_compile
             corto_t_err(data, "end token without block", start);
             goto error;
         }
+    } else if ((f = corto_t_resolve(varId, corto_type(corto_t_function_o), data))) {
+        if (corto_t_addFunc(f, (corto_t_slice){NULL, 0}, data)) {
+            goto error;
+        }
     } else {
         corto_t_op *op = corto_t_nextOp(data);
         op->kind = CORTO_T_VAR;
         op->data.var.key = (corto_t_slice){start, len};
-    }
-
-    return 0;
-error:
-    return -1;
-}
-
-static corto_int16 corto_t_addFunc(
-    corto_t_function f,
-    corto_t_slice arg,
-    corto_t_compile_t *data)
-{
-    corto_t_op *op = corto_t_nextOp(data);
-
-    op->kind = CORTO_T_FUNCTION;
-    op->data.function.function = f;
-    op->data.function.arg = arg;
-    op->data.function.block.startBuff = data->currentOp;
-    op->data.function.block.startOp = data->currentOp->count;
-    op->data.function.block.stopBuff = NULL;
-    op->data.function.block.stopOp = 0;
-
-    if (f->requiresBlock) {
-        if (corto_t_pushFunc(op, data)) {
-            goto error;
-        }
     }
 
     return 0;
@@ -174,32 +231,6 @@ static corto_int16 corto_t_import(corto_string import, corto_t_compile_t *data) 
     return 0;
 error:
     return -1;
-}
-
-static corto_object corto_t_resolve(
-    corto_string id,
-    corto_type t,
-    corto_t_compile_t *data)
-{
-    corto_t_importbuff *buf = &data->t->imports;
-    corto_uint32 i = 0;
-    corto_object result = NULL;
-
-    do {
-        while (!result && (i < buf->count)) {
-            corto_object op = buf->imports[i];
-            result = corto_lookup(op, id);
-            if (result && !corto_instanceof(t, result)) {
-                corto_t_err(data, "unexpected type", id);
-                goto error;
-            }
-            i ++;
-        }
-    } while (!result && (buf = buf->next));
-
-    return result;
-error:
-    return NULL;
 }
 
 static char* corto_t_id(char *start, corto_t_compile_t *data) {

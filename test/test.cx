@@ -35,6 +35,7 @@ test/suite Function::
     void tc_functionTwice()
     void tc_functionMultiple()
     void tc_functionNotExist()
+    void tc_functionVoid()
 
 test/suite Convert::
     void tc_convertBooleanVar()
@@ -46,6 +47,14 @@ test/suite Block::
     void tc_block()
     void tc_blockNested1()
     void tc_blockNested2()
+
+test/suite Chain::
+    void tc_chainTrue()
+    void tc_chainFalse()
+    void tc_chainThreeTT()
+    void tc_chainThreeTF()
+    void tc_chainThreeFT()
+    void tc_chainThreeFF()
 
 test/suite DefaultVar::
     void tc_default()

@@ -36,6 +36,7 @@ typedef struct corto_t_op {
             corto_t_function function;
             corto_t_slice arg;
             corto_t_block block;
+            corto_bool keepResult;
         } function;
     } data;
 } corto_t_op;

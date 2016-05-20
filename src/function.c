@@ -29,10 +29,20 @@ corto_int16 _corto_t_function_init(
 
     corto_parameterSet(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
+        "chainArg",
+        corto_t_value_o,
+        FALSE
+    );
+
+    corto_parameterSet(
+        corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "ctx",
         corto_word_o,
         FALSE
     );
+
+    /* By default append output of function to result */
+    this->echo = TRUE;
 
     return corto_function_init(this);
 /* $end */

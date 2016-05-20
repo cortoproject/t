@@ -6,4 +6,6 @@ native/type context: "corto_t_frame*"
 
 procedure function: base=function ::
     member requiresBlock: bool
+    member echo: bool
+    member chain: lang/type
     int16 init() method

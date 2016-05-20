@@ -135,6 +135,33 @@ corto_void _test_Function_tc_functionTwice(
 /* $end */
 }
 
+corto_void _test_Function_tc_functionVoid(
+    test_Function this)
+{
+/* $begin(test/Function/tc_functionVoid) */
+    corto_bool v_false = FALSE;
+    corto_t_var vars[] = {
+        {"f", corto_value_value(corto_bool_o, &v_false)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${if f}Yes!${end}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Function_tc_functionWhitespace1(
     test_Function this)
 {
