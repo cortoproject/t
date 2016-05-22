@@ -16,7 +16,7 @@ corto_int16 _corto_t_function_init(
     corto_parameterSet(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "arg",
-        corto_string_o,
+        corto_t_value_o,
         FALSE
     );
 

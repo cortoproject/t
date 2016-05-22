@@ -22,6 +22,28 @@ struct corto_t_block {
     corto_uint32 stopOp;
 };
 
+typedef enum corto_t_exprKind {
+    CORTO_T_IDENTIFIER,
+    CORTO_T_LITERAL
+} corto_t_exprKind;
+
+typedef struct corto_t_expr {
+    corto_t_exprKind kind;
+    union {
+        corto_t_slice identifier;
+        struct {
+            corto_type type;
+            union {
+                corto_bool _bool;
+                corto_uint64 _uint;
+                corto_int64 _int;
+                corto_float64 _float;
+                corto_t_slice _string;
+            } value;
+        } literal;
+    } expr;
+} corto_t_expr;
+
 /* Single template operation */
 typedef struct corto_t_op {
     corto_t_opKind kind;
@@ -34,7 +56,7 @@ typedef struct corto_t_op {
         } var;
         struct {
             corto_t_function function;
-            corto_t_slice arg;
+            corto_t_expr arg;
             corto_t_block block;
             corto_bool keepResult;
         } function;

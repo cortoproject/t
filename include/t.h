@@ -70,6 +70,7 @@ CORTO_T_EXPORT void corto_t_print(corto_t *t);
 extern "C" {
 #endif
 
+#include <corto/t/comparator.h>
 #include <corto/t/function.h>
 
 #ifdef __cplusplus

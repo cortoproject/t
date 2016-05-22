@@ -17,6 +17,32 @@ static void corto_t_printslice(corto_t_slice slice) {
     }
 }
 
+static void corto_t_printexpr(corto_t_expr *expr) {
+    switch(expr->kind) {
+    case CORTO_T_LITERAL:
+        switch(corto_primitive(expr->expr.literal.type)->kind) {
+        case CORTO_BOOLEAN:
+            printf("%s", expr->expr.literal.value._bool ? "true" : "false");
+            break;
+        case CORTO_FLOAT:
+            printf("%f", expr->expr.literal.value._float);
+            break;
+        case CORTO_TEXT:
+            printf("\"");
+            corto_t_printslice(expr->expr.literal.value._string);
+            printf("\"");
+            break;
+        default:
+            printf("unsupported literal type '%s'", corto_fullpath(NULL, expr->expr.literal.type));
+            break;
+        }
+        break;
+    case CORTO_T_IDENTIFIER:
+        corto_t_printslice(expr->expr.identifier);
+        break;
+    }
+}
+
 static void corto_t_printop(corto_t_op *op) {
     switch(op->kind) {
     case CORTO_T_TEXT:
@@ -31,7 +57,7 @@ static void corto_t_printop(corto_t_op *op) {
         break;
     case CORTO_T_FUNCTION:
         printf("> FUNC '%s' '", corto_idof(op->data.function.function));
-        corto_t_printslice(op->data.function.arg);
+        corto_t_printexpr(&op->data.function.arg);
         printf("'\n");
         break;
     }

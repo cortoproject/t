@@ -10,21 +10,20 @@
 
 /* $header() */
 static corto_bool corto_t_std_if_intern(
-    corto_string arg,
+    corto_value *arg,
     corto_bool invert,
     corto_t_block* block,
     corto_word ctx)
 {
-    corto_t_var *var = corto_t_findvar(arg, ctx);
     corto_bool result = FALSE;
-
-    if (var) {
-        corto_type t = corto_value_getType(&var->value);
-        void *ptr = corto_value_getPtr(&var->value);
+    
+    if (arg) {
+        corto_type t = corto_value_getType(arg);
+        void *ptr = corto_value_getPtr(arg);
 
         if (corto_instanceof(corto_boolean_o, t)) {
             result = *(corto_bool*)ptr;
-        } else if (var->value.kind == CORTO_OBJECT) {
+        } else if (arg->kind == CORTO_OBJECT) {
             result = ptr != NULL;
         } else if (t->reference) {
             result = *(corto_object*)ptr != NULL;
@@ -35,12 +34,10 @@ static corto_bool corto_t_std_if_intern(
             corto_seterr("cannot convert value of type '%s' to boolean",
                 corto_fullpath(NULL, t));
         }
-    } else {
-        /* If variable doesn't exist, assume FALSE */
-    }
 
-    if ((!invert && result) || (invert && !result)) {
-        corto_t_block_run(block, ctx);
+        if ((!invert && result) || (invert && !result)) {
+            corto_t_block_run(block, ctx);
+        }
     }
 
     return (result + invert) % 2;
@@ -80,22 +77,21 @@ struct corto_serializer_s corto_t_ser() {
 /* $end */
 
 corto_void _corto_t_std_each(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
 {
 /* $begin(corto/t/std/each) */
     struct corto_serializer_s s = corto_t_ser();
-    corto_t_var *var = corto_t_findvar(arg, ctx);
     corto_t_ser_t walkData = {block, ctx};
 
-    corto_serializeValue(&s, &var->value, &walkData);
+    corto_serializeValue(&s, arg, &walkData);
 /* $end */
 }
 
 corto_bool _corto_t_std_elif(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
@@ -115,8 +111,29 @@ corto_bool _corto_t_std_elif(
 /* $end */
 }
 
+corto_bool _corto_t_std_elifn(
+    corto_value* arg,
+    corto_t_block* block,
+    corto_value* chainArg,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/elifn) */
+    corto_bool *cond = corto_value_getPtr(chainArg);
+
+    /* Default to TRUE so that when block isn't executed, a chained function
+     * that follows elif also isn't executed. */
+    corto_bool result = TRUE;
+
+    if (!*cond) {
+        result = corto_t_std_if_intern(arg, TRUE, block, ctx);
+    }
+
+    return result;
+/* $end */
+}
+
 corto_void _corto_t_std_else(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
@@ -132,17 +149,20 @@ corto_void _corto_t_std_else(
 }
 
 corto_string _corto_t_std_id(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
 {
 /* $begin(corto/t/std/id) */
-    corto_t_var *var = corto_t_findvar(arg, ctx);
-    corto_type t = corto_value_getType(&var->value);
+    if (arg) {
+        corto_type t = corto_value_getType(arg);
 
-    if (var && ((var->value.kind == CORTO_OBJECT) || t->reference)) {
-        return corto_strdup(corto_idof(corto_value_getObject(&var->value)));
+        if ((arg->kind == CORTO_OBJECT) || t->reference) {
+            return corto_strdup(corto_idof(corto_value_getObject(arg)));
+        } else {
+            return NULL;
+        }
     } else {
         return NULL;
     }
@@ -150,7 +170,7 @@ corto_string _corto_t_std_id(
 }
 
 corto_bool _corto_t_std_if(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
@@ -163,7 +183,7 @@ corto_bool _corto_t_std_if(
 }
 
 corto_bool _corto_t_std_ifn(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
@@ -176,18 +196,17 @@ corto_bool _corto_t_std_ifn(
 }
 
 corto_string _corto_t_std_name(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
 {
 /* $begin(corto/t/std/name) */
-    corto_t_var *var = corto_t_findvar(arg, ctx);
 
-    if (var) {
-        corto_type t = corto_value_getType(&var->value);
-        void *ptr = corto_value_getPtr(&var->value);
-        if ((var->value.kind == CORTO_OBJECT) || t->reference) {
+    if (arg) {
+        corto_type t = corto_value_getType(arg);
+        void *ptr = corto_value_getPtr(arg);
+        if ((arg->kind == CORTO_OBJECT) || t->reference) {
             corto_id id;
             return corto_strdup(corto_nameof(id, ptr));
         } else {
@@ -201,19 +220,21 @@ corto_string _corto_t_std_name(
 }
 
 corto_object _corto_t_std_parent(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
 {
 /* $begin(corto/t/std/parent) */
-    corto_t_var *var = corto_t_findvar(arg, ctx);
-    corto_type t = corto_value_getType(&var->value);
-
-    if (var && ((var->value.kind == CORTO_OBJECT) || t->reference)) {
-        corto_object result = corto_parentof(corto_value_getObject(&var->value));
-        corto_claim(result); /* Return claim */
-        return result;
+    if (arg) {
+        corto_type t = corto_value_getType(arg);
+        if ((arg->kind == CORTO_OBJECT) || t->reference) {
+            corto_object result = corto_parentof(corto_value_getObject(arg));
+            corto_claim(result); /* Return claim */
+            return result;
+        } else {
+            return NULL;
+        }
     } else {
         return NULL;
     }
@@ -221,7 +242,7 @@ corto_object _corto_t_std_parent(
 }
 
 corto_void _corto_t_std_scope(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
@@ -234,19 +255,21 @@ corto_void _corto_t_std_scope(
 }
 
 corto_type _corto_t_std_type(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx)
 {
 /* $begin(corto/t/std/type) */
-    corto_t_var *var = corto_t_findvar(arg, ctx);
-    corto_type t = corto_value_getType(&var->value);
-
-    if (var && ((var->value.kind == CORTO_OBJECT) || t->reference)) {
-        corto_object result = corto_typeof(corto_value_getObject(&var->value));
-        corto_claim(result); /* Return claim */
-        return result;
+    if (arg) {
+        corto_type t = corto_value_getType(arg);
+        if ((arg->kind == CORTO_OBJECT) || t->reference) {
+            corto_object result = corto_typeof(corto_value_getObject(arg));
+            corto_claim(result); /* Return claim */
+            return result;
+        } else {
+            return NULL;
+        }
     } else {
         return NULL;
     }

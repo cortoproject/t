@@ -112,7 +112,8 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
     case CORTO_T_FUNCTION: {
         corto_t_function f = op->data.function.function;
         corto_type returnType = corto_function(f)->returnType;
-        corto_id arg;
+        corto_t_expr *argExpr;
+        corto_value *arg = NULL, argMem;
         void *result = NULL;
 
         /* Allocate temporary memory for function returnvalue on stack */
@@ -124,7 +125,23 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
             }
         }
 
-        corto_t_copySliceToString(arg, op->data.function.arg);
+        /* Obtain argument value */
+        argExpr = &op->data.function.arg;
+        switch(argExpr->kind) {
+        case CORTO_T_IDENTIFIER: {
+            corto_id argId;
+            corto_t_copySliceToString(argId, argExpr->expr.identifier);
+            corto_t_var *v = corto_t_findvar(argId, (corto_word)data);
+            if (v) {
+                arg = &v->value;
+            }
+            break;
+        }
+        case CORTO_T_LITERAL:
+            argMem = corto_value_value(argExpr->expr.literal.type, &argExpr->expr.literal.value);
+            arg = &argMem;
+            break;
+        }
 
         /* Invoke function */
         corto_call(

@@ -10,6 +10,12 @@
 #### chainArg
 #### ctx
 #### Returns
+### elifn
+#### arg
+#### block
+#### chainArg
+#### ctx
+#### Returns
 ### else
 #### arg
 #### block

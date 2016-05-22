@@ -24,70 +24,77 @@ extern "C" {
 
 
 CORTO_T_STD_EXPORT corto_void _corto_t_std_each(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_each(arg, block, chainArg, ctx) _corto_t_std_each(arg, block, chainArg, ctx)
 
 CORTO_T_STD_EXPORT corto_bool _corto_t_std_elif(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_elif(arg, block, chainArg, ctx) _corto_t_std_elif(arg, block, chainArg, ctx)
 
+CORTO_T_STD_EXPORT corto_bool _corto_t_std_elifn(
+    corto_value* arg,
+    corto_t_block* block,
+    corto_value* chainArg,
+    corto_word ctx);
+#define corto_t_std_elifn(arg, block, chainArg, ctx) _corto_t_std_elifn(arg, block, chainArg, ctx)
+
 CORTO_T_STD_EXPORT corto_void _corto_t_std_else(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_else(arg, block, chainArg, ctx) _corto_t_std_else(arg, block, chainArg, ctx)
 
 CORTO_T_STD_EXPORT corto_string _corto_t_std_id(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_id(arg, block, chainArg, ctx) _corto_t_std_id(arg, block, chainArg, ctx)
 
 CORTO_T_STD_EXPORT corto_bool _corto_t_std_if(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_if(arg, block, chainArg, ctx) _corto_t_std_if(arg, block, chainArg, ctx)
 
 CORTO_T_STD_EXPORT corto_bool _corto_t_std_ifn(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_ifn(arg, block, chainArg, ctx) _corto_t_std_ifn(arg, block, chainArg, ctx)
 
 CORTO_T_STD_EXPORT corto_string _corto_t_std_name(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_name(arg, block, chainArg, ctx) _corto_t_std_name(arg, block, chainArg, ctx)
 
 CORTO_T_STD_EXPORT corto_object _corto_t_std_parent(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_parent(arg, block, chainArg, ctx) _corto_t_std_parent(arg, block, chainArg, ctx)
 
 CORTO_T_STD_EXPORT corto_void _corto_t_std_scope(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
 #define corto_t_std_scope(arg, block, chainArg, ctx) _corto_t_std_scope(arg, block, chainArg, ctx)
 
 CORTO_T_STD_EXPORT corto_type _corto_t_std_type(
-    corto_string arg,
+    corto_value* arg,
     corto_t_block* block,
     corto_value* chainArg,
     corto_word ctx);
