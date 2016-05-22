@@ -36,6 +36,8 @@ test/suite Function::
     void tc_functionMultiple()
     void tc_functionNotExist()
     void tc_functionVoid()
+    void tc_functionCastStrToBool1()
+    void tc_functionCastStrToBool2()
 
 test/suite Convert::
     void tc_convertBooleanVar()

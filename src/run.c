@@ -114,6 +114,8 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
         corto_type returnType = corto_function(f)->returnType;
         corto_t_expr *argExpr;
         corto_value *arg = NULL, argMem;
+        corto_type argType = NULL;
+        corto_bool freeArg = FALSE;
         void *result = NULL;
 
         /* Allocate temporary memory for function returnvalue on stack */
@@ -134,13 +136,30 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
             corto_t_var *v = corto_t_findvar(argId, (corto_word)data);
             if (v) {
                 arg = &v->value;
+                argType = corto_value_getType(arg);
             }
             break;
         }
         case CORTO_T_LITERAL:
             argMem = corto_value_value(argExpr->expr.literal.type, &argExpr->expr.literal.value);
             arg = &argMem;
+            argType = argExpr->expr.literal.type;
             break;
+        }
+
+        /* Cast argument if necessary (chainArg always matches type) */
+        if (argType && f->argType && (f->argType != argType)) {
+            /* For now only support primitive conversions */
+            if ((argType->kind == CORTO_PRIMITIVE) && (f->argType->kind == CORTO_PRIMITIVE)) {
+                void *src = corto_value_getPtr(arg);
+                argMem = corto_value_value(f->argType, NULL);
+                corto_convert(argType, src, f->argType, &argMem.is.value.storage);
+                arg = &argMem;
+                argMem.is.value.v = &argMem.is.value.storage;
+                if (corto_primitive(f->argType)->kind == CORTO_TEXT) {
+                    freeArg = TRUE;
+                }
+            }
         }
 
         /* Invoke function */
@@ -151,6 +170,14 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
             f->requiresBlock ? &op->data.function.block : NULL,
             f->chain ? &data->lastResult : NULL,
             data);
+
+        /* Free arg if casted */
+        if (freeArg) {
+            corto_string *str = corto_value_getPtr(arg);
+            if (str && *str) {
+                corto_dealloc(*str);
+            }
+        }
 
         /* Free last result */
         if (corto_value_getPtr(&data->lastResult)) {

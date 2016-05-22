@@ -16,25 +16,9 @@ static corto_bool corto_t_std_if_intern(
     corto_word ctx)
 {
     corto_bool result = FALSE;
-    
+
     if (arg) {
-        corto_type t = corto_value_getType(arg);
-        void *ptr = corto_value_getPtr(arg);
-
-        if (corto_instanceof(corto_boolean_o, t)) {
-            result = *(corto_bool*)ptr;
-        } else if (arg->kind == CORTO_OBJECT) {
-            result = ptr != NULL;
-        } else if (t->reference) {
-            result = *(corto_object*)ptr != NULL;
-        } else if (t->kind == CORTO_PRIMITIVE) {
-            corto_convert(t, ptr, corto_bool_o, &result);
-        } else {
-            /* Cannot reduce value to boolean */
-            corto_seterr("cannot convert value of type '%s' to boolean",
-                corto_fullpath(NULL, t));
-        }
-
+        result = *(corto_bool*)corto_value_getPtr(arg);
         if ((!invert && result) || (invert && !result)) {
             corto_t_block_run(block, ctx);
         }

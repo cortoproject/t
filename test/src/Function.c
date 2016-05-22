@@ -36,6 +36,62 @@ corto_void _test_Function_tc_function(
 /* $end */
 }
 
+corto_void _test_Function_tc_functionCastStrToBool1(
+    test_Function this)
+{
+/* $begin(test/Function/tc_functionCastStrToBool1) */
+    corto_stringCreateChild_auto(root_o, i, "true");
+
+    corto_t_var vars[] = {
+        {"var", corto_value_object(i, NULL)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${if var}Hello World!${end}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "Hello World!");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Function_tc_functionCastStrToBool2(
+    test_Function this)
+{
+/* $begin(test/Function/tc_functionCastStrToBool2) */
+    corto_stringCreateChild_auto(root_o, i, "false");
+
+    corto_t_var vars[] = {
+        {"var", corto_value_object(i, NULL)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${if var}Hello World!${end}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Function_tc_functionEmbed(
     test_Function this)
 {
