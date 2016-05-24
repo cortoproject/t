@@ -111,7 +111,7 @@ static char* corto_t_token(
     char ch = *ptr;
 
     for (ptr = start + 1; (ch = *ptr) && !isspace(ch) && (ch != '}') && (ch != delim); ptr++) {
-        if ((ch != '.') && (alpha && !isalpha(ch)) && (num && !isdigit(ch))) {
+        if ((ch != '/') && (ch != '.') && (alpha && !isalpha(ch)) && (num && !isdigit(ch))) {
             break;
         }
     }
@@ -123,7 +123,7 @@ static char* corto_t_id(char *start, corto_t_compile_t *data) {
     char *ptr = start;
     char ch = *ptr;
 
-    if ((ch != '.') && !isalpha(ch)) {
+    if ((ch != '/') && (ch != '.') && !isalpha(ch)) {
         corto_t_err(data, "invalid identifier", start);
         goto error;
     }
@@ -184,7 +184,7 @@ static corto_int16 corto_t_parseObject(char *start, char *ptr, corto_type t, cor
     if (!out->expr.object) {
         corto_seterr("object '%s' not found", id);
         goto error;
-    } else if (!corto_instanceof(t, out->expr.object)) {
+    } else if (t && !corto_instanceof(t, out->expr.object)) {
         corto_seterr("object '%s' is not of type '%s'",
             corto_fullpath(NULL, out->expr.object),
             corto_fullpath(NULL, t));

@@ -38,6 +38,7 @@ test/suite Function::
     void tc_functionVoid()
     void tc_functionCastStrToBool1()
     void tc_functionCastStrToBool2()
+    void tc_functionObject()
 
 test/Suite Comparator::
     void tc_comparatorTrue()

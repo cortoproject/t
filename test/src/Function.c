@@ -163,6 +163,29 @@ corto_void _test_Function_tc_functionNotExist(
 /* $end */
 }
 
+corto_void _test_Function_tc_functionObject(
+    test_Function this)
+{
+/* $begin(test/Function/tc_functionObject) */
+    corto_int32CreateChild_auto(root_o, i, 10);
+
+    corto_t_frame ctx = {NULL, NULL};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${name /i}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "i");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Function_tc_functionTwice(
     test_Function this)
 {
