@@ -3,6 +3,9 @@
 struct Point::
     x, y: int32
 
+struct Line::
+    start, stop: Point
+
 array Points: Point, 3
 
 test/suite Identifier::
@@ -25,6 +28,15 @@ test/suite Identifier::
     void tc_identifierBracesInvalid()
     void tc_identifierEscape()
     void tc_identifierEscapeEscape()
+    void tc_identifierObject()
+    void tc_identifierObjectBraces()
+    void tc_identifierMember()
+    void tc_identifierMembers()
+    void tc_identifierNotExistMember()
+    void tc_identifierObjectMember()
+    void tc_identifierObjectMembers()
+    void tc_identifrObjectNotExistMember()
+
 
 test/suite Function::
     void tc_function()
@@ -64,6 +76,10 @@ test/suite Chain::
     void tc_chainThreeTF()
     void tc_chainThreeFT()
     void tc_chainThreeFF()
+    void tc_chainNestedTT()
+    void tc_chainNestedTF()
+    void tc_chainNestedFT()
+    void tc_chainNestedFF()
 
 test/suite DefaultVar::
     void tc_default()

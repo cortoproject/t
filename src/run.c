@@ -3,7 +3,7 @@
 #include "intern.h"
 
 typedef struct corto_t_varbuff {
-    corto_t_var vars[CORTO_T_VAR_BUFF_COUNT];
+    corto_t_var vars[CORTO_T_VAL_BUFF_COUNT];
     corto_uint32 count;
     struct corto_t_varbuff *next;
 } corto_t_varbuff;
@@ -76,34 +76,118 @@ corto_int16 corto_t_block_run(
     return result;
 }
 
+static corto_int16 corto_t_parseMember(corto_value *value, corto_t_slice mbr) {
+    corto_id memberName;
+    char *ptr = mbr.ptr, *bptr, ch;
+    corto_member member;
+
+
+    do {
+        corto_type t = corto_value_getType(value);
+        void *vptr = corto_value_getPtr(value);
+
+        bptr = memberName;
+
+        for (ptr = ptr + 1; ((ch = *ptr) != '.') && ((ptr - mbr.ptr) < mbr.len); ptr++) {
+            *bptr = ch;
+            bptr++;
+        }
+        *bptr = '\0';
+
+        /* Report error after parsing memberName for more meaningful error */
+        if (!corto_instanceof(corto_interface_o, t)) {
+            corto_seterr(
+              "can't resolve member '%s' from value of non-composite type '%s'",
+              memberName,
+              corto_fullpath(NULL, t));
+            goto error;
+        }
+
+        member = corto_interface_resolveMember(t, memberName);
+        if (!member) {
+            corto_seterr("unresolved member '%s' in type '%s'",
+                memberName,
+                corto_fullpath(NULL, t));
+            goto error;
+        }
+
+        *value = corto_value_value(member->type, CORTO_OFFSET(vptr, member->offset));
+    } while ((ptr - mbr.ptr) < mbr.len);
+
+    return 0;
+error:
+    return -1;
+}
+
 static corto_value* corto_t_parseExpr(
     corto_t_expr *expr,
     corto_value *arg,
     corto_t_run_t *data)
 {
     corto_value *result = NULL;
+    corto_id argId;
+    corto_t_exprKind kind = expr->kind;
+    corto_t_slice member = {NULL, 0};
 
-    switch(expr->kind) {
+    switch(kind) {
+    case CORTO_T_IDENTIFIER_MEMBER: {
+        corto_t_slice idNoMembers = {
+          expr->expr.identifier_member.identifier.ptr,
+          expr->expr.identifier_member.idLen
+        };
+        corto_t_copySliceToString(argId, idNoMembers);
+
+        /* Get slice containing just the member expression (from . onwards) */
+        member = (corto_t_slice){
+          expr->expr.identifier_member.identifier.ptr + expr->expr.identifier_member.idLen,
+          expr->expr.identifier_member.identifier.len - expr->expr.identifier_member.idLen
+        };
+    }
+
     case CORTO_T_IDENTIFIER: {
-        corto_id argId;
-        corto_t_copySliceToString(argId, expr->expr.identifier);
+        if (expr->kind == CORTO_T_IDENTIFIER) {
+            corto_t_copySliceToString(argId, expr->expr.identifier);
+        }
         corto_t_var *v = corto_t_findvar(argId, (corto_word)data);
         if (v) {
-            result = &v->value;
+            if (expr->kind == CORTO_T_IDENTIFIER) {
+                result = &v->value;
+            } else {
+                *arg = v->value;
+                result = arg;
+            }
         }
         break;
     }
-    case CORTO_T_LITERAL:
-        *arg = corto_value_value(expr->expr.literal.type, &expr->expr.literal.value);
+    case CORTO_T_OBJECT_MEMBER:
+        *arg = corto_value_object(expr->expr.object_member.object, NULL);
+        member = (corto_t_slice){
+            expr->expr.object_member.member.ptr,
+            expr->expr.object_member.member.len
+        };
         result = arg;
         break;
     case CORTO_T_OBJECT:
         *arg = corto_value_object(expr->expr.object, NULL);
         result = arg;
         break;
+    case CORTO_T_LITERAL:
+        *arg = corto_value_value(expr->expr.literal.type, &expr->expr.literal.value);
+        result = arg;
+        break;
+    }
+
+    if ((kind == CORTO_T_IDENTIFIER_MEMBER) || (kind == CORTO_T_OBJECT_MEMBER)) {
+        if (result) {
+            if (corto_t_parseMember(result, member)) {
+                goto error;
+            }
+        }
     }
 
     return result;
+error:
+    return NULL;
 }
 
 static corto_bool corto_t_castValue(
@@ -304,18 +388,18 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
         break;
     }
 
-    case CORTO_T_VAR: {
-        corto_id key;
-        memcpy(key, op->data.var.key.ptr, op->data.var.key.len);
-        key[op->data.var.key.len] = '\0';
+    case CORTO_T_VAL: {
+        corto_value valMem, *val = corto_t_parseExpr(
+            &op->data.val.expr,
+            &valMem,
+            data);
 
-        corto_t_var *v = corto_t_findvar(key, (corto_word)data);
-        if (v) {
-            void *value = corto_value_getPtr(&v->value);
-            if (corto_instanceof(corto_text_o, corto_value_getType(&v->value))) {
-                corto_buffer_appendstr(&data->buf, *(corto_string*)value);
+        if (val) {
+            void *ptr = corto_value_getPtr(val);
+            if (corto_instanceof(corto_text_o, corto_value_getType(val))) {
+                corto_buffer_appendstr(&data->buf, *(corto_string*)ptr);
             } else {
-                corto_string str = corto_strv(&v->value, 0);
+                corto_string str = corto_strv(val, 0);
                 corto_buffer_appendstr(&data->buf, str);
                 corto_dealloc(str);
             }

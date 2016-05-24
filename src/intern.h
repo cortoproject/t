@@ -4,7 +4,7 @@ typedef struct corto_t_opbuff corto_t_opbuff;
 /* Different op kinds */
 typedef enum corto_t_opKind {
     CORTO_T_TEXT,
-    CORTO_T_VAR,
+    CORTO_T_VAL,
     CORTO_T_FUNCTION,
     CORTO_T_FUNCTION_COMPARATOR,
     CORTO_T_COMPARATOR
@@ -26,14 +26,25 @@ struct corto_t_block {
 
 typedef enum corto_t_exprKind {
     CORTO_T_IDENTIFIER,
-    CORTO_T_LITERAL,
-    CORTO_T_OBJECT
+    CORTO_T_OBJECT,
+    CORTO_T_IDENTIFIER_MEMBER,
+    CORTO_T_OBJECT_MEMBER,
+    CORTO_T_LITERAL
 } corto_t_exprKind;
 
 typedef struct corto_t_expr {
     corto_t_exprKind kind;
     union {
         corto_t_slice identifier;
+        corto_object object;
+        struct {
+            corto_t_slice identifier;
+            corto_uint32 idLen; /* Length of identifier without members */
+        } identifier_member;
+        struct {
+            corto_object object;
+            corto_t_slice member;
+        } object_member;
         struct {
             corto_type type;
             union {
@@ -44,7 +55,6 @@ typedef struct corto_t_expr {
                 corto_t_slice _string;
             } value;
         } literal;
-        corto_object object;
     } expr;
 } corto_t_expr;
 
@@ -56,8 +66,8 @@ typedef struct corto_t_op {
             corto_t_slice t;
         } text;
         struct {
-            corto_t_slice key;
-        } var;
+            corto_t_expr expr;
+        } val;
         struct {
             corto_t_function function;
             corto_t_expr arg;

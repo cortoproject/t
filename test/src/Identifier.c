@@ -414,6 +414,60 @@ corto_void _test_Identifier_tc_identifierInvalid(
 /* $end */
 }
 
+corto_void _test_Identifier_tc_identifierMember(
+    test_Identifier this)
+{
+/* $begin(test/Identifier/tc_identifierMember) */
+    test_Point p = {10, 20};
+    corto_t_var vars[] = {
+        {"var", corto_value_value(test_Point_o, &p)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("{$var.x, $var.y}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "{10, 20}");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Identifier_tc_identifierMembers(
+    test_Identifier this)
+{
+/* $begin(test/Identifier/tc_identifierMembers) */
+    test_Line l = {{10, 20}, {30, 40}};
+    corto_t_var vars[] = {
+        {"var", corto_value_value(test_Line_o, &l)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("{{$var.start.x, $var.start.y}, {$var.stop.x, $var.stop.y}}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "{{10, 20}, {30, 40}}");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Identifier_tc_identifierMultiple(
     test_Identifier this)
 {
@@ -469,6 +523,118 @@ corto_void _test_Identifier_tc_identifierNotExist(
 /* $end */
 }
 
+corto_void _test_Identifier_tc_identifierNotExistMember(
+    test_Identifier this)
+{
+/* $begin(test/Identifier/tc_identifierNotExistMember) */
+    corto_string v = "world";
+    corto_t_var vars[] = {
+        {"var", corto_value_value(corto_string_o, &v)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("$foo.x");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Identifier_tc_identifierObject(
+    test_Identifier this)
+{
+/* $begin(test/Identifier/tc_identifierObject) */
+    corto_int32CreateChild_auto(root_o, i, 10);
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("$/i");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "10");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Identifier_tc_identifierObjectBraces(
+    test_Identifier this)
+{
+/* $begin(test/Identifier/tc_identifierObjectBraces) */
+    corto_int32CreateChild_auto(root_o, i, 10);
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${/i}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "10");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Identifier_tc_identifierObjectMember(
+    test_Identifier this)
+{
+/* $begin(test/Identifier/tc_identifierObjectMember) */
+    test_PointCreateChild_auto(root_o, p, 10, 20);
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("{$/p.x, $/p.y}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "{10, 20}");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Identifier_tc_identifierObjectMembers(
+    test_Identifier this)
+{
+/* $begin(test/Identifier/tc_identifierObjectMembers) */
+    test_Point start = {10, 20}, stop = {30, 40};
+    test_LineCreateChild_auto(root_o, l, &start, &stop);
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("{{$/l.start.x, $/l.start.y}, {$/l.stop.x, $/l.stop.y}}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "{{10, 20}, {30, 40}}");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Identifier_tc_identifierTwice(
     test_Identifier this)
 {
@@ -492,6 +658,18 @@ corto_void _test_Identifier_tc_identifierTwice(
 
     corto_dealloc(str);
     corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Identifier_tc_identifrObjectNotExistMember(
+    test_Identifier this)
+{
+/* $begin(test/Identifier/tc_identifrObjectNotExistMember) */
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("{$/p.x, $/p.y}");
+    test_assert(t == NULL);
 
 /* $end */
 }

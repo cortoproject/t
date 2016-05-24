@@ -43,6 +43,13 @@ static void corto_t_printexpr(corto_t_expr *expr) {
     case CORTO_T_OBJECT:
         printf("%s", corto_fullpath(NULL, expr->expr.object));
         break;
+    case CORTO_T_IDENTIFIER_MEMBER:
+        corto_t_printslice(expr->expr.identifier_member.identifier);
+        break;
+    case CORTO_T_OBJECT_MEMBER:
+        printf("%s.", corto_fullpath(NULL, expr->expr.object));
+        corto_t_printslice(expr->expr.object_member.member);
+        break;
     }
 }
 
@@ -53,9 +60,9 @@ static void corto_t_printop(corto_t_op *op) {
         corto_t_printslice(op->data.text.t);
         printf("'\n");
         break;
-    case CORTO_T_VAR:
+    case CORTO_T_VAL:
         printf("> VAR '");
-        corto_t_printslice(op->data.var.key);
+        corto_t_printexpr(&op->data.val.expr);
         printf("'\n");
         break;
     case CORTO_T_FUNCTION:

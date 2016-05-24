@@ -21,7 +21,7 @@
 #define CORTO_T_IMPORT_BUFF_COUNT (8)
 
 /* Number of variables in a buffer */
-#define CORTO_T_VAR_BUFF_COUNT (16)
+#define CORTO_T_VAL_BUFF_COUNT (16)
 
 /* Maximum nesting depth for frames */
 #define CORTO_T_FRAME_DEPTH (16)

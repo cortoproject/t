@@ -35,6 +35,116 @@ corto_void _test_Chain_tc_chainFalse(
 /* $end */
 }
 
+corto_void _test_Chain_tc_chainNestedFF(
+    test_Chain this)
+{
+/* $begin(test/Chain/tc_chainNestedFF) */
+    corto_bool v_false = FALSE;
+    corto_t_var vars[] = {
+        {"f", corto_value_value(corto_bool_o, &v_false)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${if f}A${if f}B${else}C${end}D${else}E${if f}F${else}G${end}H${end}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "EGH");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Chain_tc_chainNestedFT(
+    test_Chain this)
+{
+/* $begin(test/Chain/tc_chainNestedFT) */
+    corto_bool v_false = FALSE, v_true = TRUE;
+    corto_t_var vars[] = {
+        {"t", corto_value_value(corto_bool_o, &v_true)},
+        {"f", corto_value_value(corto_bool_o, &v_false)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${if f}A${if t}B${else}C${end}D${else}E${if t}F${else}G${end}H${end}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "EFH");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Chain_tc_chainNestedTF(
+    test_Chain this)
+{
+/* $begin(test/Chain/tc_chainNestedTF) */
+    corto_bool v_false = FALSE, v_true = TRUE;
+    corto_t_var vars[] = {
+        {"t", corto_value_value(corto_bool_o, &v_true)},
+        {"f", corto_value_value(corto_bool_o, &v_false)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${if t}A${if f}B${else}C${end}D${else}E${if f}F${else}G${end}H${end}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "ACD");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Chain_tc_chainNestedTT(
+    test_Chain this)
+{
+/* $begin(test/Chain/tc_chainNestedTT) */
+    corto_bool v_true = TRUE;
+    corto_t_var vars[] = {
+        {"t", corto_value_value(corto_bool_o, &v_true)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${if t}A${if t}B${else}C${end}D${else}E${if t}F${else}G${end}H${end}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "ABD");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Chain_tc_chainThreeFF(
     test_Chain this)
 {

@@ -3,7 +3,7 @@
 
 #include "intern.h"
 
-#define CORTO_T_VAR_CURRENT ((corto_t_slice){NULL, 0})
+#define CORTO_T_VAL_CURRENT ((corto_t_slice){NULL, 0})
 
 typedef struct corto_t_compile_t {
     corto_t *t;
@@ -105,14 +105,30 @@ static char* corto_t_token(
     corto_bool alpha,
     corto_bool num,
     corto_char delim,
+    char **member,
     corto_t_compile_t *data)
 {
     char *ptr = start;
     char ch = *ptr;
 
+    if (member) {
+        *member = NULL;
+    }
+
     for (ptr = start + 1; (ch = *ptr) && !isspace(ch) && (ch != '}') && (ch != delim); ptr++) {
-        if ((ch != '/') && (ch != '.') && (alpha && !isalpha(ch)) && (num && !isdigit(ch))) {
+        if (ch == '.') {
+            if (member && !*member) {
+                *member = ptr;
+            }
+        } else if ((ch != '/') && (alpha && !isalpha(ch)) && (num && !isdigit(ch))) {
             break;
+        }
+    }
+
+    if (member) {
+        /* If the identifier is just 1 character long, it contains no members */
+        if ((ptr - start) == 1) {
+            *member = NULL;
         }
     }
 
@@ -128,7 +144,7 @@ static char* corto_t_id(char *start, corto_t_compile_t *data) {
         goto error;
     }
 
-    ptr = corto_t_token(ptr, TRUE, TRUE, '\0', data);
+    ptr = corto_t_token(ptr, TRUE, TRUE, '\0', NULL, data);
 
     return ptr;
 error:
@@ -139,7 +155,7 @@ static char* corto_t_numExpr(char *start, corto_t_expr *out, corto_t_compile_t *
     char *ptr = start;
     corto_id num;
 
-    ptr = corto_t_token(ptr, TRUE, TRUE, '\0', data);
+    ptr = corto_t_token(ptr, TRUE, TRUE, '\0', NULL, data);
     if (!ptr) {
         goto error;
     }
@@ -158,7 +174,7 @@ error:
 static char* corto_t_strExpr(char *start, corto_t_expr *out, corto_t_compile_t *data) {
     char *ptr = start;
 
-    ptr = corto_t_token(ptr, TRUE, TRUE, '"', data);
+    ptr = corto_t_token(ptr, TRUE, TRUE, '"', NULL, data);
     if (!ptr) {
         goto error;
     }
@@ -199,18 +215,28 @@ error:
 static char* corto_t_parseExpr(char *start, corto_type t, corto_t_expr *out, corto_t_compile_t *data) {
     char *ptr = start;
     char ch = *ptr;
+    char *member = NULL;
 
     if (ch == '"') {
         ptr = corto_t_strExpr(start, out, data);
     } else if (ch == '/') {
-        ptr = corto_t_token(ptr, TRUE, TRUE, '\0', data);
-        if (corto_t_parseObject(start, ptr, t, out, data)) {
+        ptr = corto_t_token(ptr, TRUE, TRUE, '\0', &member, data);
+        if (corto_t_parseObject(start, member ? member - 1: ptr, t, out, data)) {
             goto error;
         }
+        if (member) {
+            out->kind = CORTO_T_OBJECT_MEMBER;
+            out->expr.object_member.member.ptr = member;
+            out->expr.object_member.member.len = 1 + ptr - member;
+        }
+    } else if (ch == '\0') {
+        out->kind = CORTO_T_IDENTIFIER;
+        out->expr.identifier.ptr = start;
+        out->expr.identifier.len = 1 + ptr - start;
     } else if (isdigit(ch)) {
         ptr = corto_t_numExpr(start, out, data);
     } else if (isalpha(ch)) {
-        ptr = corto_t_token(ptr, TRUE, TRUE, '\0', data);
+        ptr = corto_t_token(ptr, TRUE, TRUE, '\0', &member, data);
         if (ptr) {
             if ((ptr - start == 4) && !memcmp(start, "true", ptr - start)) {
                 out->kind = CORTO_T_LITERAL;
@@ -222,13 +248,25 @@ static char* corto_t_parseExpr(char *start, corto_type t, corto_t_expr *out, cor
                 out->expr.literal.value._bool = FALSE;
             } else {
                 if (t && t->reference) {
-                    if (corto_t_parseObject(start, ptr, t, out, data)) {
+                    if (corto_t_parseObject(start, member ? member - 1: ptr, t, out, data)) {
                         goto error;
                     }
+                    if (member) {
+                        out->kind = CORTO_T_OBJECT_MEMBER;
+                        out->expr.object_member.member.ptr = member;
+                        out->expr.object_member.member.len = 1 + ptr - member;
+                    }
                 } else {
-                    out->kind = CORTO_T_IDENTIFIER;
-                    out->expr.identifier.ptr = start;
-                    out->expr.identifier.len = 1 + ptr - start;
+                    if (!member) {
+                        out->kind = CORTO_T_IDENTIFIER;
+                        out->expr.identifier.ptr = start;
+                        out->expr.identifier.len = 1 + ptr - start;
+                    } else {
+                        out->kind = CORTO_T_IDENTIFIER_MEMBER;
+                        out->expr.identifier_member.identifier.ptr = start;
+                        out->expr.identifier_member.identifier.len = 1 + ptr - start;
+                        out->expr.identifier_member.idLen = member - start;
+                    }
                 }
             }
         } else {
@@ -363,8 +401,10 @@ static corto_int16 corto_t_addVar(corto_string start, corto_uint32 len, corto_t_
         }
     } else {
         corto_t_op *op = corto_t_nextOp(data);
-        op->kind = CORTO_T_VAR;
-        op->data.var.key = (corto_t_slice){start, len};
+        op->kind = CORTO_T_VAL;
+        if (!corto_t_parseExpr(start, NULL, &op->data.val.expr, data)) {
+            goto error;
+        }
     }
 
     return 0;
@@ -682,7 +722,9 @@ static char* corto_t_section(char *start, corto_t_compile_t *data) {
          * operation for it */
         if (*ptr == CORTO_T_CLOSE) {
             /* Add variable to template program */
-            corto_t_addVar(id.ptr, id.len, data);
+            if (corto_t_addVar(id.ptr, id.len, data)) {
+                goto error;
+            }
 
         /* If next token is a '|', this section is a filter */
         } else if (*ptr == '|') {
@@ -706,7 +748,9 @@ static char* corto_t_sigil(char *start, corto_t_compile_t *data) {
     /* When '$' is followed by a whitespace, insert current value */
     if (isspace(ch)) {
         ptr --; /* Give back whitespace */
-        corto_t_addVar(NULL, 0, data);
+        if (corto_t_addVar("", 0, data)) {
+            goto error;
+        }
 
     /* Open a section with {} */
     } else if (ch == CORTO_T_OPEN) {
@@ -719,7 +763,9 @@ static char* corto_t_sigil(char *start, corto_t_compile_t *data) {
             goto error;
         }
 
-        corto_t_addVar(ptr, 1 + end - ptr, data);
+        if (corto_t_addVar(ptr, 1 + end - ptr, data)) {
+            goto error;
+        }
         ptr = end;
     }
 

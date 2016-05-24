@@ -31,6 +31,7 @@ extern "C" {
 #include <DefaultVar.h>
 #include <Function.h>
 #include <Identifier.h>
+#include <Line.h>
 #include <Point.h>
 
 #ifdef __cplusplus
