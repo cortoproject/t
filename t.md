@@ -3,6 +3,7 @@
 ## block
 
 ## comparator
+### argType
 ### init()
 #### Returns
 

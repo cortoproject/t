@@ -27,6 +27,13 @@ corto_int16 _corto_t_comparator_init(
         FALSE
     );
 
+    corto_parameterSet(
+        corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
+        "ctx",
+        corto_word_o,
+        FALSE
+    );
+
     corto_setref(&corto_function(this)->returnType, corto_bool_o);
 
     return corto_function_init(this);

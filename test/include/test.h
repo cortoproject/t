@@ -26,6 +26,7 @@ extern "C" {
 
 #include <Block.h>
 #include <Chain.h>
+#include <Comparator.h>
 #include <Convert.h>
 #include <DefaultVar.h>
 #include <Function.h>

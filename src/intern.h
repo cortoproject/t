@@ -5,7 +5,9 @@ typedef struct corto_t_opbuff corto_t_opbuff;
 typedef enum corto_t_opKind {
     CORTO_T_TEXT,
     CORTO_T_VAR,
-    CORTO_T_FUNCTION
+    CORTO_T_FUNCTION,
+    CORTO_T_FUNCTION_COMPARATOR,
+    CORTO_T_COMPARATOR
 } corto_t_opKind;
 
 /* A slice of the template string */
@@ -24,7 +26,8 @@ struct corto_t_block {
 
 typedef enum corto_t_exprKind {
     CORTO_T_IDENTIFIER,
-    CORTO_T_LITERAL
+    CORTO_T_LITERAL,
+    CORTO_T_OBJECT
 } corto_t_exprKind;
 
 typedef struct corto_t_expr {
@@ -41,6 +44,7 @@ typedef struct corto_t_expr {
                 corto_t_slice _string;
             } value;
         } literal;
+        corto_object object;
     } expr;
 } corto_t_expr;
 
@@ -60,6 +64,11 @@ typedef struct corto_t_op {
             corto_t_block block;
             corto_bool keepResult;
         } function;
+        struct {
+            corto_t_comparator comparator;
+            struct corto_t_op *function; /* arg1 is stored in function */
+            corto_t_expr arg;
+        } comparator;
     } data;
 } corto_t_op;
 

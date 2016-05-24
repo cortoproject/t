@@ -39,6 +39,12 @@ test/suite Function::
     void tc_functionCastStrToBool1()
     void tc_functionCastStrToBool2()
 
+test/Suite Comparator::
+    void tc_comparatorTrue()
+    void tc_comparatorFalse()
+    void tc_comparator2ArgTrue()
+    void tc_comparator2ArgFalse()
+
 test/suite Convert::
     void tc_convertBooleanVar()
     void tc_convertNumericVar()

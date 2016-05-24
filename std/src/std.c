@@ -60,6 +60,44 @@ struct corto_serializer_s corto_t_ser() {
 }
 /* $end */
 
+corto_bool _corto_t_std_declared(
+    corto_value* arg1,
+    corto_value* arg2,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/declared) */
+    if (arg1) {
+        corto_type t = corto_value_getType(arg1);
+        if ((arg1->kind == CORTO_OBJECT) || t->reference) {
+            return corto_checkState(corto_value_getPtr(arg1), CORTO_DECLARED);
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
+/* $end */
+}
+
+corto_bool _corto_t_std_defined(
+    corto_value* arg1,
+    corto_value* arg2,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/defined) */
+    if (arg1) {
+        corto_type t = corto_value_getType(arg1);
+        if ((arg1->kind == CORTO_OBJECT) || t->reference) {
+            return corto_checkState(corto_value_getPtr(arg1), CORTO_DEFINED);
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
+/* $end */
+}
+
 corto_void _corto_t_std_each(
     corto_value* arg,
     corto_t_block* block,
@@ -179,6 +217,26 @@ corto_bool _corto_t_std_ifn(
 /* $end */
 }
 
+corto_bool _corto_t_std_instanceof(
+    corto_value* arg1,
+    corto_value* arg2,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/instanceof) */
+    if (arg1) {
+        corto_type valueType = corto_value_getType(arg1);
+        corto_type t = corto_value_getPtr(arg2);
+        if (corto_instanceofType(t, valueType)) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
+/* $end */
+}
+
 corto_string _corto_t_std_name(
     corto_value* arg,
     corto_t_block* block,
@@ -199,6 +257,25 @@ corto_string _corto_t_std_name(
         }
     } else {
         return NULL;
+    }
+/* $end */
+}
+
+corto_bool _corto_t_std_observable(
+    corto_value* arg1,
+    corto_value* arg2,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/observable) */
+    if (arg1) {
+        corto_type t = corto_value_getType(arg1);
+        if ((arg1->kind == CORTO_OBJECT) || t->reference) {
+            return corto_checkAttr(corto_value_getPtr(arg1), CORTO_ATTR_OBSERVABLE);
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
     }
 /* $end */
 }
@@ -225,6 +302,26 @@ corto_object _corto_t_std_parent(
 /* $end */
 }
 
+corto_bool _corto_t_std_persistent(
+    corto_value* arg1,
+    corto_value* arg2,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/persistent) */
+    if (arg1) {
+        corto_type t = corto_value_getType(arg1);
+        if ((arg1->kind == CORTO_OBJECT) || t->reference) {
+            return corto_checkAttr(corto_value_getPtr(arg1), CORTO_ATTR_PERSISTENT);
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
+
+/* $end */
+}
+
 corto_void _corto_t_std_scope(
     corto_value* arg,
     corto_t_block* block,
@@ -234,6 +331,26 @@ corto_void _corto_t_std_scope(
 /* $begin(corto/t/std/scope) */
 
     /* << Insert implementation >> */
+
+/* $end */
+}
+
+corto_bool _corto_t_std_scoped(
+    corto_value* arg1,
+    corto_value* arg2,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/scoped) */
+    if (arg1) {
+        corto_type t = corto_value_getType(arg1);
+        if ((arg1->kind == CORTO_OBJECT) || t->reference) {
+            return corto_checkAttr(corto_value_getPtr(arg1), CORTO_ATTR_SCOPED);
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
 
 /* $end */
 }
@@ -257,6 +374,26 @@ corto_type _corto_t_std_type(
     } else {
         return NULL;
     }
+/* $end */
+}
+
+corto_bool _corto_t_std_valid(
+    corto_value* arg1,
+    corto_value* arg2,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/valid) */
+    if (arg1) {
+        corto_type t = corto_value_getType(arg1);
+        if ((arg1->kind == CORTO_OBJECT) || t->reference) {
+            return corto_checkState(corto_value_getPtr(arg1), CORTO_VALID);
+        } else {
+            return FALSE;
+        }
+    } else {
+        return FALSE;
+    }
+
 /* $end */
 }
 

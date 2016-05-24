@@ -40,6 +40,9 @@ static void corto_t_printexpr(corto_t_expr *expr) {
     case CORTO_T_IDENTIFIER:
         corto_t_printslice(expr->expr.identifier);
         break;
+    case CORTO_T_OBJECT:
+        printf("%s", corto_fullpath(NULL, expr->expr.object));
+        break;
     }
 }
 
@@ -58,6 +61,14 @@ static void corto_t_printop(corto_t_op *op) {
     case CORTO_T_FUNCTION:
         printf("> FUNC '%s' '", corto_idof(op->data.function.function));
         corto_t_printexpr(&op->data.function.arg);
+        printf("'\n");
+        break;
+    case CORTO_T_FUNCTION_COMPARATOR:
+        printf("> FUNC '%s' <comparator>\n", corto_idof(op->data.function.function));
+        break;
+    case CORTO_T_COMPARATOR:
+        printf("> COMP '%s' '", corto_idof(op->data.comparator.comparator));
+        corto_t_printexpr(&op->data.comparator.arg);
         printf("'\n");
         break;
     }

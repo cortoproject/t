@@ -12,3 +12,12 @@ t/function elif: requiresBlock=true returnType=bool argType=bool chainType=bool 
 t/function elifn: requiresBlock=true returnType=bool argType=bool chainType=bool echo=false chain=true
 t/function @else: requiresBlock=true chainType=bool chain=true
 t/function each: requiresBlock=true
+
+t/comparator scoped{}
+t/comparator persistent{}
+t/comparator observable{}
+t/comparator declared{}
+t/comparator defined{}
+t/comparator valid{}
+
+t/comparator instanceof: argType=lang/type
