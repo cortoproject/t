@@ -81,7 +81,8 @@ test/suite Chain::
     void tc_chainNestedFF()
 
 test/suite Filter::
-    void tc_filter()
+    void tc_filterVar()
+    void tc_filterFunc()
 
 test/suite DefaultVar::
     void tc_default()

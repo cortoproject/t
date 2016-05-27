@@ -378,7 +378,7 @@ static void corto_t_runFilter(corto_t_op *op, corto_t_run_t *data) {
 
     argMem = data->reg;
     arg = &argMem;
-    freeArg = corto_t_castValue(arg, corto_string_o);
+    freeArg = corto_t_castValue(arg, corto_type(corto_string_o));
 
     /* Invoke function */
     corto_call(
@@ -487,6 +487,10 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 
     case CORTO_T_FILTER:
         corto_t_runFilter(op, data);
+        break;
+
+    default:
+        corto_assert(FALSE, "invalid template operation (%d)", kind);
         break;
     }
 

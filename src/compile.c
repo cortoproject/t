@@ -511,13 +511,14 @@ error:
     return -1;
 }
 
-static corto_int16 corto_t_func(
+static corto_t_op* corto_t_func(
     corto_t_slice func,
     corto_t_slice arg,
     corto_t_compile_t *data)
 {
     corto_t_function f;
     corto_id funcId;
+    corto_t_op *op;
 
     corto_t_copySliceToString(funcId, func);
 
@@ -531,17 +532,19 @@ static corto_int16 corto_t_func(
         goto error;
     }
 
-    if (!corto_t_addVal(arg.ptr, arg.len, CORTO_T_TOREG, data)) {
+    if (arg.ptr) {
+        if (!corto_t_addVal(arg.ptr, arg.len, CORTO_T_TOREG, data)) {
+            goto error;
+        }
+    }
+
+    if (!(op = corto_t_addFunction(f, data))) {
         goto error;
     }
 
-    if (!corto_t_addFunction(f, data)) {
-        goto error;
-    }
-
-    return 0;
+    return op;
 error:
-    return -1;
+    return NULL;
 }
 
 static corto_int16 corto_t_comp_2arg(
@@ -737,13 +740,23 @@ static char* corto_t_section_func(
 
     /* If closing curly brace is found, there are no comparators */
     if (*ptr == CORTO_T_CLOSE) {
-        if (corto_t_func(func, id, data)) {
+        if (!corto_t_func(func, id, data)) {
             goto error;
         }
 
     /* If section doesn't close, expect comparator */
     } else if ((ptr[0] == 'i') && (ptr[1] == 's')) {
         ptr = corto_t_section_comparator(ptr + 2, func, id, data);
+
+    } else if (*ptr == '|') {
+        corto_t_op *op;
+        if (!(op = corto_t_func(func, id, data))) {
+            goto error;
+        }
+
+        /* Write result of function to register */
+        op->kind |= CORTO_T_TOREG;
+        ptr = corto_t_section_filter(ptr + 1, id, data);
 
     } else {
         corto_t_err(data, "unexpected token", ptr);
