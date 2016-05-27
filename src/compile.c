@@ -367,6 +367,17 @@ error:
     return NULL;
 }
 
+static corto_t_op* corto_t_addFilter(
+    corto_function f,
+    corto_t_compile_t *data)
+{
+    corto_t_op *op = corto_t_nextOp(data);
+    op->kind = CORTO_T_FILTER;
+    op->data.filter.filter = f;
+
+    return op;
+}
+
 static corto_t_op* corto_t_addComparator(
     corto_t_comparator c,
     corto_t_slice arg,
@@ -491,9 +502,9 @@ static corto_int16 corto_t_filter(corto_t_slice id, corto_t_slice filter, corto_
         goto error;
     }
 
-    /*if (!corto_t_addFilter(f, data)) {
+    if (!corto_t_addFilter(f, data)) {
         goto error;
-    }*/
+    }
 
     return 0;
 error:
@@ -649,7 +660,7 @@ static char* corto_t_section_filter(
         goto error;
     }
 
-    return ptr ? ptr + 1 : NULL;
+    return ptr;
 error:
     return NULL;
 }
@@ -769,13 +780,17 @@ static char* corto_t_section(char *start, corto_t_compile_t *data) {
         /* If an identifier just appears by itself in a section, create a var
          * operation for it */
         if (*ptr == CORTO_T_CLOSE) {
-            /* Add variable to template program */
+            /* Add value to template program */
             if (!corto_t_addVal(id.ptr, id.len, CORTO_T_TOBUFF, data)) {
                 goto error;
             }
 
         /* If next token is a '|', this section is a filter */
         } else if (*ptr == '|') {
+            if (!corto_t_addVal(id.ptr, id.len, CORTO_T_TOREG, data)) {
+                goto error;
+            }
+
             ptr = corto_t_section_filter(ptr + 1, id, data);
 
         /* Otherwise, a function call is expected */

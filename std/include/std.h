@@ -136,6 +136,10 @@ CORTO_T_STD_EXPORT corto_type _corto_t_std_type(
     corto_word ctx);
 #define corto_t_std_type(arg, block, chainArg, ctx) _corto_t_std_type(arg, block, chainArg, ctx)
 
+CORTO_T_STD_EXPORT corto_string _corto_t_std_upper(
+    corto_string arg);
+#define corto_t_std_upper(arg) _corto_t_std_upper(arg)
+
 CORTO_T_STD_EXPORT corto_bool _corto_t_std_valid(
     corto_value* arg1,
     corto_value* arg2,

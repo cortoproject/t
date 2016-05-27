@@ -377,6 +377,16 @@ corto_type _corto_t_std_type(
 /* $end */
 }
 
+corto_string _corto_t_std_upper(
+    corto_string arg)
+{
+/* $begin(corto/t/std/upper) */
+    corto_string result = strdup(arg);
+    corto_strupper(result);
+    return result;
+/* $end */
+}
+
 corto_bool _corto_t_std_valid(
     corto_value* arg1,
     corto_value* arg2,

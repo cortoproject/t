@@ -21,3 +21,5 @@ t/comparator defined{}
 t/comparator valid{}
 
 t/comparator instanceof: argType=lang/type
+
+string upper(string arg)

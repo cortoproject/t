@@ -360,6 +360,48 @@ static corto_bool corto_t_runFunction(corto_t_op *op, corto_value  *out, corto_t
     return jumped;
 }
 
+static void corto_t_runFilter(corto_t_op *op, corto_t_run_t *data) {
+    corto_function f = op->data.filter.filter;
+    corto_type returnType = corto_function(f)->returnType;
+    corto_value *arg = NULL, argMem;
+    corto_bool freeArg = FALSE;
+    void *result = NULL;
+
+    /* Allocate temporary memory for function returnvalue on stack */
+    if (returnType && (returnType->kind != CORTO_VOID)) {
+        if (corto_function(f)->returnsReference) {
+            result = alloca(sizeof(corto_object));
+        } else {
+            result = alloca(corto_type_sizeof(returnType));
+        }
+    }
+
+    argMem = data->reg;
+    arg = &argMem;
+    freeArg = corto_t_castValue(arg, corto_string_o);
+
+    /* Invoke function */
+    corto_call(
+        f,
+        result,
+        *(corto_string*)corto_value_getPtr(arg));
+
+    /* Free arg if casted */
+    if (freeArg) {
+        corto_string *str = corto_value_getPtr(arg);
+        if (str && *str) {
+            corto_dealloc(*str);
+        }
+    }
+
+    /* Free last result */
+    corto_t_cleanreg(data);
+
+    corto_value val;
+    val = corto_value_value(returnType, result);
+    corto_t_write(op, &val, data);
+}
+
 static void corto_t_runComparator(corto_t_op *op, corto_t_run_t *data) {
     corto_t_comparator c = op->data.comparator.comparator;
     corto_value *arg1 = NULL, *arg2 = NULL, argMem1, argMem2;
@@ -441,6 +483,10 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 
     case CORTO_T_COMPARATOR:
         corto_t_runComparator(op, data);
+        break;
+
+    case CORTO_T_FILTER:
+        corto_t_runFilter(op, data);
         break;
     }
 

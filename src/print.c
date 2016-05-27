@@ -93,9 +93,12 @@ static void corto_t_printop(corto_t_op *op) {
         printf("%s FUNCTION '%s'\n", corto_t_printroute(op), corto_idof(op->data.function.function));
         break;
     case CORTO_T_COMPARATOR:
-        printf("%s COMPARE  '%s' '", corto_t_printroute(op), corto_idof(op->data.comparator.comparator));
+        printf("%s COMPARE  '%s'", corto_t_printroute(op), corto_idof(op->data.comparator.comparator));
         corto_t_printexpr(&op->data.comparator.arg);
         printf("'\n");
+        break;
+    case CORTO_T_FILTER:
+        printf("%s FILTER   '%s'\n", corto_t_printroute(op), corto_idof(op->data.filter.filter));
         break;
     }
 }

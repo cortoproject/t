@@ -92,6 +92,9 @@
 #### chainArg
 #### ctx
 #### Returns
+### upper(string arg)
+#### arg
+#### Returns
 ### valid
 #### arg1
 #### arg2
