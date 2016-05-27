@@ -29,6 +29,7 @@ extern "C" {
 #include <Comparator.h>
 #include <Convert.h>
 #include <DefaultVar.h>
+#include <Filter.h>
 #include <Function.h>
 #include <Identifier.h>
 #include <Line.h>

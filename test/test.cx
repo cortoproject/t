@@ -37,7 +37,6 @@ test/suite Identifier::
     void tc_identifierObjectMembers()
     void tc_identifrObjectNotExistMember()
 
-
 test/suite Function::
     void tc_function()
     void tc_functionWhitespace1()
@@ -80,6 +79,9 @@ test/suite Chain::
     void tc_chainNestedTF()
     void tc_chainNestedFT()
     void tc_chainNestedFF()
+
+test/suite Filter::
+    void tc_filter()
 
 test/suite DefaultVar::
     void tc_default()

@@ -1,13 +1,24 @@
 
 typedef struct corto_t_opbuff corto_t_opbuff;
 
-/* Different op kinds */
+/* Different operation kinds. The first three kinds are masks that can be
+ * applied to any operator, and determine where the output of the operation is
+ * stored */
 typedef enum corto_t_opKind {
-    CORTO_T_TEXT,
-    CORTO_T_VAL,
-    CORTO_T_FUNCTION,
-    CORTO_T_FUNCTION_COMPARATOR,
-    CORTO_T_COMPARATOR
+
+    /* By default, instructions write to buffer */
+    CORTO_T_TOBUFF = 0,
+
+    /* Indicates that instruction should write to register */
+    CORTO_T_TOREG = 1,
+
+    /* Operations */
+    CORTO_T_TEXT = 2,
+    CORTO_T_VAL = 4,
+    CORTO_T_FUNCTION = 6,
+    CORTO_T_FUNCTION_CHAIN = 8,
+    CORTO_T_COMPARATOR = 10,
+    CORTO_T_FILTER = 12
 } corto_t_opKind;
 
 /* A slice of the template string */
@@ -70,15 +81,15 @@ typedef struct corto_t_op {
         } val;
         struct {
             corto_t_function function;
-            corto_t_expr arg;
             corto_t_block block;
-            corto_bool keepResult;
         } function;
         struct {
             corto_t_comparator comparator;
-            struct corto_t_op *function; /* arg1 is stored in function */
             corto_t_expr arg;
         } comparator;
+        struct {
+            corto_function filter;
+        } filter;
     } data;
 } corto_t_op;
 

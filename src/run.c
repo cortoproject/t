@@ -13,8 +13,10 @@ typedef struct corto_t_run_t {
     corto_buffer buf;
     corto_t_frame *globals;
     corto_t_frame *stack[CORTO_T_FRAME_DEPTH];
-    corto_value lastResult; /* For chaining functions */
-    corto_bool reg; /* For storing comparator result */
+    corto_value chain; /* For chaining functions */
+    corto_value reg; /* For communicating values between operations */
+    corto_bool cleanChain; /* Does chain hold allocation */
+    corto_bool cleanReg; /* Does reg hold allocation */
     corto_uint32 sp;
     corto_t_opbuff *current;
     corto_uint32 op;
@@ -216,7 +218,90 @@ static corto_bool corto_t_castValue(
     return freeArg;
 }
 
-static corto_bool corto_t_runFunction(corto_t_op *op, corto_bool comparator, corto_t_run_t *data) {
+static void corto_t_cleanValue(corto_value *val) {
+    corto_type t = corto_value_getType(val);
+    void *ptr = corto_value_getPtr(val);
+    if (ptr) {
+        if (t->kind == CORTO_PRIMITIVE) {
+            if (corto_primitive(t)->kind == CORTO_TEXT) {
+                if (*(corto_string*)ptr) {
+                    corto_dealloc(*(corto_string*)ptr);
+                }
+            }
+        } else {
+            corto_deinitp(ptr, t);
+            corto_dealloc(ptr);
+        }
+    }
+    *val = corto_value_value(NULL, NULL);
+}
+
+static void corto_t_cleanreg(corto_t_run_t *data) {
+    if (data->cleanReg) {
+        corto_t_cleanValue(&data->reg);
+        data->cleanReg = FALSE;
+    }
+
+    if (data->cleanChain) {
+        corto_t_cleanValue(&data->chain);
+        data->cleanChain = FALSE;
+    }
+}
+
+static void corto_t_write(corto_t_op *op, corto_value *val, corto_t_run_t *data) {
+    corto_bool toReg = op->kind & CORTO_T_TOREG;
+    corto_bool toChain = (op->kind == CORTO_T_FUNCTION_CHAIN);
+
+    if (val) {
+        corto_type t = corto_value_getType(val);
+        void *result = corto_value_getPtr(val);
+
+        if (toReg || toChain) {
+            corto_value *dst;
+            corto_bool *hasAlloc;
+
+            if (toReg) {
+                dst = &data->reg;
+                hasAlloc = &data->cleanReg;
+            } else if (toChain) {
+                dst = &data->chain;
+                hasAlloc = &data->cleanChain;
+            }
+
+            if (val->kind == CORTO_OBJECT) {
+                *(corto_value*)dst = *val;
+            } else if (val->kind == CORTO_VALUE) {
+                void *ptr = NULL;
+                *(corto_value*)dst = corto_value_value(t, NULL);
+
+                /* Use 64-bit storage of value object to store scalar values */
+                if ((t->kind == CORTO_PRIMITIVE) || t->reference) {
+                    ptr = &dst->is.value.storage;
+                    memcpy(ptr, result, corto_type_sizeof(t));
+
+                /* Allocate on heap for non-scalar/reference values */
+                } else {
+                    ptr = corto_calloc(corto_type_sizeof(t));
+                    corto_copyp(ptr, t, result);
+                    *hasAlloc = TRUE;
+                }
+                ((corto_value*)dst)->is.value.v = ptr;
+            }
+        } else {
+            if (corto_instanceof(corto_text_o, t)) {
+                corto_buffer_appendstr(&data->buf, *(corto_string*)result);
+            } else {
+                corto_string str = corto_strv(val, 0);
+                corto_buffer_appendstr(&data->buf, str);
+                corto_dealloc(str);
+            }
+        }
+    } else if (!(toReg || toChain)) {
+        corto_buffer_appendstr(&data->buf, "");
+    }
+}
+
+static corto_bool corto_t_runFunction(corto_t_op *op, corto_value  *out, corto_t_run_t *data) {
     corto_t_function f = op->data.function.function;
     corto_type returnType = corto_function(f)->returnType;
     corto_value *arg = NULL, argMem;
@@ -233,14 +318,8 @@ static corto_bool corto_t_runFunction(corto_t_op *op, corto_bool comparator, cor
         }
     }
 
-    /* Obtain argument value */
-    if (!comparator) {
-        arg = corto_t_parseExpr(&op->data.function.arg, &argMem, data);
-    } else {
-        /* If function has a comparator, result has been set in register */
-        argMem = corto_value_value(corto_bool_o, &data->reg);
-        arg = &argMem;
-    }
+    argMem = data->reg;
+    arg = &argMem;
     freeArg = corto_t_castValue(arg, f->argType);
 
     /* Invoke function */
@@ -249,7 +328,7 @@ static corto_bool corto_t_runFunction(corto_t_op *op, corto_bool comparator, cor
         result,
         arg,
         f->requiresBlock ? &op->data.function.block : NULL,
-        f->chain ? &data->lastResult : NULL,
+        f->chain ? &data->chain : NULL,
         data);
 
     /* Free arg if casted */
@@ -261,68 +340,16 @@ static corto_bool corto_t_runFunction(corto_t_op *op, corto_bool comparator, cor
     }
 
     /* Free last result */
-    if (corto_value_getPtr(&data->lastResult)) {
-        corto_type t = corto_value_getType(&data->lastResult);
-        void *ptr = corto_value_getPtr(&data->lastResult);
-        if (ptr) {
-            if (t->kind == CORTO_PRIMITIVE) {
-                if (corto_primitive(t)->kind == CORTO_TEXT) {
-                    if (*(corto_string*)ptr) {
-                        corto_dealloc(*(corto_string*)ptr);
-                    }
-                }
-            } else if (t->reference) {
-                if (*(corto_object*)ptr) {
-                    corto_release(*(corto_object*)ptr);
-                }
-            } else {
-                corto_deinitp(ptr, t);
-                corto_dealloc(ptr);
-            }
-        }
+    corto_t_cleanreg(data);
 
-        /* Reset lastResult */
-        data->lastResult = corto_value_value(NULL, NULL);
-    }
-
-    if (returnType && op->data.function.keepResult) {
-        void *ptr = NULL;
-        data->lastResult = corto_value_value(returnType, NULL);
-
-        /* Use 64-bit storage of value object to store scalar values */
-        if ((returnType->kind == CORTO_PRIMITIVE) || returnType->reference) {
-            ptr = &data->lastResult.is.value.storage;
-            memcpy(ptr, result, corto_type_sizeof(returnType));
-
-        /* Allocate on heap for non-scalar/reference values */
-        } else {
-            ptr = corto_calloc(corto_type_sizeof(returnType));
-            corto_copyp(ptr, returnType, result);
-        }
-
-        data->lastResult.is.value.v = ptr;
-    }
-
-    /* Append returnvalue of function to buffer */
-    if (returnType && corto_t_function(f)->echo) {
-        if (corto_instanceof(corto_text_o, returnType)) {
-            if (*(corto_string*)result) {
-                corto_buffer_appendstr(&data->buf, *(corto_string*)result);
-                if (!op->data.function.keepResult) {
-                    corto_dealloc(*(corto_string*)result);
-                }
-            } else {
-                corto_buffer_appendstr(&data->buf, "");
-            }
-        } else {
-            corto_string str = corto_strp(result, returnType, 0);
-            if (str) {
-                corto_buffer_appendstr(&data->buf, str);
-                corto_dealloc(str);
-            } else {
-                corto_buffer_appendstr(&data->buf, "");
-            }
-        }
+    if (result && (
+        corto_t_function(f)->echo ||
+        (op->kind & CORTO_T_TOREG) ||
+        (op->kind == CORTO_T_FUNCTION_CHAIN)))
+    {
+        corto_value val;
+        val = corto_value_value(returnType, result);
+        corto_t_write(op, &val, data);
     }
 
     if (f->requiresBlock) {
@@ -337,12 +364,11 @@ static void corto_t_runComparator(corto_t_op *op, corto_t_run_t *data) {
     corto_t_comparator c = op->data.comparator.comparator;
     corto_value *arg1 = NULL, *arg2 = NULL, argMem1, argMem2;
     corto_bool freeArg1 = FALSE, freeArg2 = FALSE;
+    corto_bool result;
 
     /* Obtain 1st argument value from function reference */
-    arg1 = corto_t_parseExpr(
-        &op->data.comparator.function->data.function.arg,
-        &argMem1,
-        data);
+    argMem1 = data->reg;
+    arg1 = &argMem1;
     freeArg1 = corto_t_castValue(arg1, c->argType);
 
     /* Parse 2nd argument */
@@ -355,10 +381,15 @@ static void corto_t_runComparator(corto_t_op *op, corto_t_run_t *data) {
     /* Invoke function */
     corto_call(
         corto_function(c),
-        &data->reg,
+        &result,
         arg1,
         arg2,
         data);
+
+    /* Store comparator result in reg */
+    data->reg = corto_value_value(corto_bool_o, NULL);
+    data->reg.is.value.storage = (corto_word)result;
+    data->reg.is.value.v = &data->reg.is.value.storage;
 
     /* Free args if casted */
     if (freeArg1) {
@@ -378,8 +409,14 @@ static void corto_t_runComparator(corto_t_op *op, corto_t_run_t *data) {
 /* Returns TRUE if operation manually set the program counter */
 static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
     corto_bool jumped = FALSE;
+    corto_value outMem, *out = NULL;
+    corto_t_opKind kind = op->kind;
 
-    switch(op->kind) {
+    if (kind & CORTO_T_TOREG) {
+        kind -= CORTO_T_TOREG;
+    }
+
+    switch(kind) {
     case CORTO_T_TEXT: {
         corto_buffer_appendstrn(
             &data->buf,
@@ -389,32 +426,17 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
     }
 
     case CORTO_T_VAL: {
-        corto_value valMem, *val = corto_t_parseExpr(
+        out = corto_t_parseExpr(
             &op->data.val.expr,
-            &valMem,
+            &outMem,
             data);
-
-        if (val) {
-            void *ptr = corto_value_getPtr(val);
-            if (corto_instanceof(corto_text_o, corto_value_getType(val))) {
-                corto_buffer_appendstr(&data->buf, *(corto_string*)ptr);
-            } else {
-                corto_string str = corto_strv(val, 0);
-                corto_buffer_appendstr(&data->buf, str);
-                corto_dealloc(str);
-            }
-        } else {
-            corto_buffer_appendstr(&data->buf, "");
-        }
+        corto_t_write(op, out, data);
         break;
     }
 
+    case CORTO_T_FUNCTION_CHAIN:
     case CORTO_T_FUNCTION:
-        jumped = corto_t_runFunction(op, FALSE, data);
-        break;
-
-    case CORTO_T_FUNCTION_COMPARATOR:
-        jumped = corto_t_runFunction(op, TRUE, data);
+        jumped = corto_t_runFunction(op, out, data);
         break;
 
     case CORTO_T_COMPARATOR:
@@ -427,10 +449,10 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 
 corto_string corto_t_run(corto_t *t, corto_t_frame *globals) {
     corto_string result = NULL;
-    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, {0}, 0, 0, &t->ops, 0};
+    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, {0}, {0}, FALSE, FALSE, 0, &t->ops, 0};
     data.vars.count = 0;
     data.vars.next = 0;
-    data.lastResult = corto_value_value(NULL, NULL);
+    data.chain = corto_value_value(NULL, NULL);
 
     corto_t_run_ops(NULL, 0, &data);
 

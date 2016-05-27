@@ -53,28 +53,47 @@ static void corto_t_printexpr(corto_t_expr *expr) {
     }
 }
 
+static char* corto_t_printroute(corto_t_op *op) {
+    corto_bool reg = FALSE;
+    if (op->kind & CORTO_T_TOREG) {
+        reg = TRUE;
+    }
+    if ((op->kind == CORTO_T_FUNCTION) || (op->kind == CORTO_T_FUNCTION_CHAIN))  {
+        if (!op->data.function.function->echo) {
+            return "  ";
+        }
+    }
+    if (reg) {
+        return "> ";
+    } else {
+        return "< ";
+    }
+}
+
 static void corto_t_printop(corto_t_op *op) {
-    switch(op->kind) {
+    corto_t_opKind kind = op->kind;
+    if (op->kind & CORTO_T_TOREG) {
+        kind -= CORTO_T_TOREG;
+    }
+    switch(kind) {
     case CORTO_T_TEXT:
-        printf("> TXT '");
+        printf("%s TEXT     '", corto_t_printroute(op));
         corto_t_printslice(op->data.text.t);
         printf("'\n");
         break;
     case CORTO_T_VAL:
-        printf("> VAR '");
+        printf("%s VALUE    '", corto_t_printroute(op));
         corto_t_printexpr(&op->data.val.expr);
         printf("'\n");
         break;
-    case CORTO_T_FUNCTION:
-        printf("> FUNC '%s' '", corto_idof(op->data.function.function));
-        corto_t_printexpr(&op->data.function.arg);
-        printf("'\n");
+    case CORTO_T_FUNCTION_CHAIN:
+        printf("%s CHAIN    '%s'\n", corto_t_printroute(op), corto_idof(op->data.function.function));
         break;
-    case CORTO_T_FUNCTION_COMPARATOR:
-        printf("> FUNC '%s' <comparator>\n", corto_idof(op->data.function.function));
+    case CORTO_T_FUNCTION:
+        printf("%s FUNCTION '%s'\n", corto_t_printroute(op), corto_idof(op->data.function.function));
         break;
     case CORTO_T_COMPARATOR:
-        printf("> COMP '%s' '", corto_idof(op->data.comparator.comparator));
+        printf("%s COMPARE  '%s' '", corto_t_printroute(op), corto_idof(op->data.comparator.comparator));
         corto_t_printexpr(&op->data.comparator.arg);
         printf("'\n");
         break;

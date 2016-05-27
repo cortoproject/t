@@ -13,6 +13,8 @@ typedef struct corto_t_compile_t {
     corto_uint32 sp;
 } corto_t_compile_t;
 
+static corto_t_op* corto_t_addVal(corto_string start, corto_uint32 len, corto_t_opKind flag, corto_t_compile_t *data);
+
 static void corto_t_err(corto_t_compile_t *t, char *msg, char *start) {
     char buff[20];
     char *ptr, *bptr = buff, ch;
@@ -291,13 +293,14 @@ error:
     return -1;
 }
 
-static void corto_t_popFunc(corto_t_compile_t *data) {
+static corto_t_op* corto_t_popFunc(corto_t_compile_t *data) {
     corto_t_op *op = data->stack[data->sp - 1];
 
     op->data.function.block.stopBuff = data->currentOp;
     op->data.function.block.stopOp = data->currentOp->count;
 
     data->sp --;
+    return op;
 }
 
 static void corto_t_addText(char *start, corto_uint32 len, corto_t_compile_t *data) {
@@ -308,9 +311,8 @@ static void corto_t_addText(char *start, corto_uint32 len, corto_t_compile_t *da
     }
 }
 
-static corto_t_op* corto_t_addFunction(
+static corto_int16 corto_t_prepareChain(
     corto_t_function f,
-    corto_t_slice arg,
     corto_t_compile_t *data)
 {
     if (f->chain) {
@@ -321,8 +323,8 @@ static corto_t_op* corto_t_addFunction(
                 /* Take current function from stack */
                 corto_t_popFunc(data);
 
-                /* Indicate that previous function is part of a chain */
-                op->data.function.keepResult = TRUE;
+                /* Write result to chain */
+                op->kind = CORTO_T_FUNCTION_CHAIN;
             } else {
                 corto_seterr("unmatching '%s' with '%s' (%s vs. %s)",
                     corto_idof(cur),
@@ -337,6 +339,15 @@ static corto_t_op* corto_t_addFunction(
         }
     }
 
+    return 0;
+error:
+    return -1;
+}
+
+static corto_t_op* corto_t_addFunction(
+    corto_t_function f,
+    corto_t_compile_t *data)
+{
     corto_t_op *op = corto_t_nextOp(data);
     op->kind = CORTO_T_FUNCTION;
     op->data.function.function = f;
@@ -344,13 +355,6 @@ static corto_t_op* corto_t_addFunction(
     op->data.function.block.startOp = data->currentOp->count;
     op->data.function.block.stopBuff = NULL;
     op->data.function.block.stopOp = 0;
-    op->data.function.keepResult = FALSE;
-
-    if (arg.ptr) {
-        if (!corto_t_parseExpr(arg.ptr, f->argType, &op->data.function.arg, data)) {
-            goto error;
-        }
-    }
 
     if (f->requiresBlock) {
         if (corto_t_pushFunc(op, data)) {
@@ -383,33 +387,38 @@ error:
     return NULL;
 }
 
-static corto_int16 corto_t_addVar(corto_string start, corto_uint32 len, corto_t_compile_t *data) {
+static corto_t_op* corto_t_addVal(corto_string start, corto_uint32 len, corto_t_opKind flag, corto_t_compile_t *data) {
     corto_id varId;
     corto_t_function f;
+    corto_t_op *result = NULL;
     corto_t_copySliceToString(varId, (corto_t_slice){start, len});
 
     if ((len == 3) && (!memcmp(start, "end", 3))) {
         if (data->sp) {
-            corto_t_popFunc(data);
+            result = corto_t_popFunc(data);
         } else {
             corto_t_err(data, "end token without block", start);
             goto error;
         }
     } else if (len && (f = corto_t_resolve(varId, corto_type(corto_t_function_o), data))) {
-        if (!corto_t_addFunction(f, (corto_t_slice){NULL, 0}, data)) {
+        if (corto_t_prepareChain(f, data)) {
+            goto error;
+        }
+        if (!(result = corto_t_addFunction(f, data))) {
             goto error;
         }
     } else {
         corto_t_op *op = corto_t_nextOp(data);
-        op->kind = CORTO_T_VAL;
+        op->kind = CORTO_T_VAL | flag;
         if (!corto_t_parseExpr(start, NULL, &op->data.val.expr, data)) {
             goto error;
         }
+        result = op;
     }
 
-    return 0;
+    return result;
 error:
-    return -1;
+    return NULL;
 }
 
 void corto_t_copySliceToString(corto_id buf, corto_t_slice slice) {
@@ -471,7 +480,24 @@ static corto_int16 corto_t_forward(corto_t_slice fwd, corto_t_slice arg, corto_t
 }
 
 static corto_int16 corto_t_filter(corto_t_slice id, corto_t_slice filter, corto_t_compile_t *data) {
+    corto_function f;
+    corto_id filterId;
+
+    corto_t_copySliceToString(filterId, filter);
+
+    f = corto_t_resolve(filterId, corto_type(corto_function_o), data);
+    if (!f) {
+        corto_t_err(data, "unknown function", filter.ptr);
+        goto error;
+    }
+
+    /*if (!corto_t_addFilter(f, data)) {
+        goto error;
+    }*/
+
     return 0;
+error:
+    return -1;
 }
 
 static corto_int16 corto_t_func(
@@ -490,7 +516,15 @@ static corto_int16 corto_t_func(
         goto error;
     }
 
-    if (!corto_t_addFunction(f, arg, data)) {
+    if (corto_t_prepareChain(f, data)) {
+        goto error;
+    }
+
+    if (!corto_t_addVal(arg.ptr, arg.len, CORTO_T_TOREG, data)) {
+        goto error;
+    }
+
+    if (!corto_t_addFunction(f, data)) {
         goto error;
     }
 
@@ -526,22 +560,24 @@ static corto_int16 corto_t_comp_2arg(
         goto error;
     }
 
+    if (corto_t_prepareChain(f, data)) {
+        goto error;
+    }
+
+    if (!corto_t_addVal(arg1.ptr, arg1.len, CORTO_T_TOREG, data)) {
+        goto error;
+    }
+
     if (!(compOp = corto_t_addComparator(c, arg2, data))) {
         goto error;
     }
 
-    if (!(funcOp = corto_t_addFunction(f, arg1, data))) {
+    if (!(funcOp = corto_t_addFunction(f, data))) {
         goto error;
     }
 
-    /* Set reference to function in comparator */
-    compOp->data.comparator.function = funcOp;
-
-    /* Change opkind to comparator function */
-    funcOp->kind = CORTO_T_FUNCTION_COMPARATOR;
-
     return 0;
-  error:
+error:
     return -1;
 }
 
@@ -554,7 +590,7 @@ static corto_int16 corto_t_comp(
     return corto_t_comp_2arg(func, arg1, comparator, (corto_t_slice){NULL, 0}, data);
 }
 
-static char* corto_t_section_parseForward(char *start, corto_t_compile_t *data) {
+static char* corto_t_section_forward(char *start, corto_t_compile_t *data) {
     corto_t_slice fwd, arg;
 
     char *end = corto_t_id(start, data);
@@ -583,7 +619,7 @@ error:
     return NULL;
 }
 
-static char* corto_t_section_parseFilter(
+static char* corto_t_section_filter(
     char *start,
     corto_t_slice id,
     corto_t_compile_t *data)
@@ -591,22 +627,34 @@ static char* corto_t_section_parseFilter(
     corto_t_slice filter;
     char *ptr = corto_t_skipspace(start);
 
-    /* Parse filter identifier */
-    char *end = corto_t_id(ptr, data);
-    if (!end) {
+    do {
+        if (*ptr == '|') ptr ++;
+
+        /* Parse filter identifier */
+        char *end = corto_t_id(ptr, data);
+        if (!end) {
+            goto error;
+        } else {
+            filter = (corto_t_slice){ptr, 1 + end - ptr};
+        }
+
+        corto_t_filter(id, filter, data);
+
+        ptr = corto_t_skipspace(end + 1);
+    } while (*ptr && *ptr == '|');
+
+    /* Filters must end with a close token */
+    if (*ptr != CORTO_T_CLOSE) {
+        corto_t_err(data, "unexpected token after filter", start);
         goto error;
-    } else {
-        filter = (corto_t_slice){ptr, ptr - end};
     }
 
-    corto_t_filter(id, filter, data);
-
-    return corto_t_skipspace(end);
+    return ptr ? ptr + 1 : NULL;
 error:
     return NULL;
 }
 
-static char* corto_t_section_parseComparator(
+static char* corto_t_section_comparator(
     char *start,
     corto_t_slice func,
     corto_t_slice arg1,
@@ -659,7 +707,7 @@ error:
     return NULL;
 }
 
-static char* corto_t_section_parseFunction(
+static char* corto_t_section_func(
     char *start,
     corto_t_slice func,
     corto_t_compile_t *data)
@@ -684,7 +732,7 @@ static char* corto_t_section_parseFunction(
 
     /* If section doesn't close, expect comparator */
     } else if ((ptr[0] == 'i') && (ptr[1] == 's')) {
-        ptr = corto_t_section_parseComparator(ptr + 2, func, id, data);
+        ptr = corto_t_section_comparator(ptr + 2, func, id, data);
 
     } else {
         corto_t_err(data, "unexpected token", ptr);
@@ -704,7 +752,7 @@ static char* corto_t_section(char *start, corto_t_compile_t *data) {
     char *ptr = corto_t_skipspace(start);
 
     if (*ptr == '>') {
-        ptr = corto_t_section_parseForward(ptr + 1, data);
+        ptr = corto_t_section_forward(ptr + 1, data);
     } else {
 
         /* Parse first identifier */
@@ -722,17 +770,17 @@ static char* corto_t_section(char *start, corto_t_compile_t *data) {
          * operation for it */
         if (*ptr == CORTO_T_CLOSE) {
             /* Add variable to template program */
-            if (corto_t_addVar(id.ptr, id.len, data)) {
+            if (!corto_t_addVal(id.ptr, id.len, CORTO_T_TOBUFF, data)) {
                 goto error;
             }
 
         /* If next token is a '|', this section is a filter */
         } else if (*ptr == '|') {
-            ptr = corto_t_section_parseFilter(ptr, id, data);
+            ptr = corto_t_section_filter(ptr + 1, id, data);
 
         /* Otherwise, a function call is expected */
         } else {
-            ptr = corto_t_section_parseFunction(ptr, id, data);
+            ptr = corto_t_section_func(ptr, id, data);
         }
     }
 
@@ -748,7 +796,7 @@ static char* corto_t_sigil(char *start, corto_t_compile_t *data) {
     /* When '$' is followed by a whitespace, insert current value */
     if (isspace(ch)) {
         ptr --; /* Give back whitespace */
-        if (corto_t_addVar("", 0, data)) {
+        if (!corto_t_addVal("", 0, CORTO_T_TOBUFF, data)) {
             goto error;
         }
 
@@ -763,7 +811,7 @@ static char* corto_t_sigil(char *start, corto_t_compile_t *data) {
             goto error;
         }
 
-        if (corto_t_addVar(ptr, 1 + end - ptr, data)) {
+        if (!corto_t_addVal(ptr, 1 + end - ptr, CORTO_T_TOBUFF, data)) {
             goto error;
         }
         ptr = end;
