@@ -33,6 +33,7 @@ extern "C" {
 #include <Function.h>
 #include <Identifier.h>
 #include <Line.h>
+#include <Literals.h>
 #include <Point.h>
 
 #ifdef __cplusplus

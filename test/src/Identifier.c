@@ -122,9 +122,10 @@ corto_void _test_Identifier_tc_identifierBracesInvalid(
 
     /* Compile template */
     corto_t *t = corto_t_compile("Hello ${*}!");
+
     test_assert(t == NULL);
     test_assert(corto_lasterr() != NULL);
-    test_assertstr(corto_lasterr(), "invalid identifier near '*}!'");
+    test_assertstr(corto_lasterr(), "invalid expression near '*}!'");
 
 /* $end */
 }

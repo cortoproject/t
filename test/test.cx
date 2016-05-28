@@ -8,6 +8,12 @@ struct Line::
 
 array Points: Point, 3
 
+test/suite Literals::
+    void tc_true()
+    void tc_false()
+    void tc_number()
+    void tc_string()
+
 test/suite Identifier::
     void tc_identifier()
     void tc_identifierBraces()

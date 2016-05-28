@@ -90,6 +90,10 @@ CORTO_T_STD_EXPORT corto_bool _corto_t_std_instanceof(
     corto_word ctx);
 #define corto_t_std_instanceof(arg1, arg2, ctx) _corto_t_std_instanceof(arg1, arg2, ctx)
 
+CORTO_T_STD_EXPORT corto_string _corto_t_std_lower(
+    corto_string arg);
+#define corto_t_std_lower(arg) _corto_t_std_lower(arg)
+
 CORTO_T_STD_EXPORT corto_string _corto_t_std_name(
     corto_value* arg,
     corto_t_block* block,

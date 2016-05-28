@@ -237,6 +237,16 @@ corto_bool _corto_t_std_instanceof(
 /* $end */
 }
 
+corto_string _corto_t_std_lower(
+    corto_string arg)
+{
+/* $begin(corto/t/std/lower) */
+    corto_string result = strdup(arg);
+    corto_strupper(result);
+    return result;
+/* $end */
+}
+
 corto_string _corto_t_std_name(
     corto_value* arg,
     corto_t_block* block,

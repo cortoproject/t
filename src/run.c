@@ -15,6 +15,7 @@ typedef struct corto_t_run_t {
     corto_t_frame *stack[CORTO_T_FRAME_DEPTH];
     corto_value chain; /* For chaining functions */
     corto_value reg; /* For communicating values between operations */
+    corto_id regStr; /* For storing reg string literals */
     corto_bool cleanChain; /* Does chain hold allocation */
     corto_bool cleanReg; /* Does reg hold allocation */
     corto_uint32 sp;
@@ -124,6 +125,7 @@ error:
 static corto_value* corto_t_parseExpr(
     corto_t_expr *expr,
     corto_value *arg,
+    char *buffer,
     corto_t_run_t *data)
 {
     corto_value *result = NULL;
@@ -174,7 +176,18 @@ static corto_value* corto_t_parseExpr(
         result = arg;
         break;
     case CORTO_T_LITERAL:
-        *arg = corto_value_value(expr->expr.literal.type, &expr->expr.literal.value);
+        if ((expr->expr.literal.type->kind == CORTO_PRIMITIVE) &&
+            (corto_primitive(expr->expr.literal.type)->kind == CORTO_TEXT))
+        {
+            corto_t_copySliceToString(buffer, expr->expr.literal.value._string);
+            *arg = corto_value_value(expr->expr.literal.type, NULL);
+
+            /* C can't take an address of an array, but this works. */
+            arg->is.value.storage = (corto_word)buffer;
+            arg->is.value.v = &arg->is.value.storage;
+        } else {
+            *arg = corto_value_value(expr->expr.literal.type, &expr->expr.literal.value);
+        }
         result = arg;
         break;
     }
@@ -407,6 +420,7 @@ static void corto_t_runComparator(corto_t_op *op, corto_t_run_t *data) {
     corto_value *arg1 = NULL, *arg2 = NULL, argMem1, argMem2;
     corto_bool freeArg1 = FALSE, freeArg2 = FALSE;
     corto_bool result;
+    corto_id buffer;
 
     /* Obtain 1st argument value from function reference */
     argMem1 = data->reg;
@@ -417,6 +431,7 @@ static void corto_t_runComparator(corto_t_op *op, corto_t_run_t *data) {
     arg2 = corto_t_parseExpr(
         &op->data.comparator.arg,
         &argMem2,
+        buffer,
         data);
     freeArg2 = corto_t_castValue(arg2, c->argType);
 
@@ -471,6 +486,7 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
         out = corto_t_parseExpr(
             &op->data.val.expr,
             &outMem,
+            data->regStr,
             data);
         corto_t_write(op, out, data);
         break;
@@ -499,7 +515,7 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 
 corto_string corto_t_run(corto_t *t, corto_t_frame *globals) {
     corto_string result = NULL;
-    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, {0}, {0}, FALSE, FALSE, 0, &t->ops, 0};
+    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, {0}, {0}, {'\0'}, FALSE, FALSE, 0, &t->ops, 0};
     data.vars.count = 0;
     data.vars.next = 0;
     data.chain = corto_value_value(NULL, NULL);
@@ -526,7 +542,9 @@ corto_t_var* corto_t_findvar(corto_string var, corto_word ctx) {
     }
 
     if (!result) {
-        result = data->globals->findvar(var, data->globals->data);
+        if (data->globals) {
+            result = data->globals->findvar(var, data->globals->data);
+        }
     }
 
     return result;

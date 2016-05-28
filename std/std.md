@@ -54,6 +54,9 @@
 #### arg2
 #### ctx
 #### Returns
+### lower(string arg)
+#### arg
+#### Returns
 ### name
 #### arg
 #### block
