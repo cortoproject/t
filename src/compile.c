@@ -266,7 +266,7 @@ static char* corto_t_parseExpr(char *start, corto_t_expr *out, corto_t_compile_t
         out->kind = CORTO_T_IDENTIFIER;
         out->expr.identifier.ptr = start;
         out->expr.identifier.len = 0;
-    } else if (isdigit(ch)) {
+    } else if (isdigit(ch) || (ch == '-')) {
         ptr = corto_t_numExpr(start, out, data);
     } else if (isalpha(ch)) {
         ptr = corto_t_token(ptr, TRUE, TRUE, '\0', &member, data);
