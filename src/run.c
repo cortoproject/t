@@ -391,13 +391,13 @@ static void corto_t_runFilter(corto_t_op *op, corto_t_run_t *data) {
 
     argMem = data->reg;
     arg = &argMem;
-    freeArg = corto_t_castValue(arg, corto_type(corto_string_o));
+    freeArg = corto_t_castValue(arg, corto_type(f->parameters.buffer[0].type));
 
     /* Invoke function */
-    corto_call(
+    corto_callb(
         f,
         result,
-        *(corto_string*)corto_value_getPtr(arg));
+        (void*[]){corto_value_getPtr(arg)});
 
     /* Free arg if casted */
     if (freeArg) {

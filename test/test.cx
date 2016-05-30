@@ -12,6 +12,8 @@ test/suite Literals::
     void tc_true()
     void tc_false()
     void tc_number()
+    void tc_numberNegative()
+    void tc_numberFloat()
     void tc_string()
 
 test/suite Identifier::
@@ -56,6 +58,7 @@ test/suite Function::
     void tc_functionCastStrToBool1()
     void tc_functionCastStrToBool2()
     void tc_functionObject()
+    void tc_functionNum()
 
 test/Suite Comparator::
     void tc_comparatorTrue()
@@ -87,8 +90,12 @@ test/suite Chain::
     void tc_chainNestedFF()
 
 test/suite Filter::
-    void tc_filterVar()
-    void tc_filterFunc()
+    void tc_filterLiteral()
+    void tc_filterVariable()
+    void tc_filterFunction()
+    void tc_filterLiteralNum()
+    void tc_filterVariableNum()
+    void tc_filterFunctionNum()
 
 test/suite DefaultVar::
     void tc_default()

@@ -23,6 +23,17 @@ extern "C" {
 #endif
 
 
+CORTO_T_STD_EXPORT corto_int64 _corto_t_std_abs(
+    corto_int64 arg);
+#define corto_t_std_abs(arg) _corto_t_std_abs(arg)
+
+CORTO_T_STD_EXPORT corto_uint64 _corto_t_std_count(
+    corto_value* arg,
+    corto_t_block* block,
+    corto_value* chainArg,
+    corto_word ctx);
+#define corto_t_std_count(arg, block, chainArg, ctx) _corto_t_std_count(arg, block, chainArg, ctx)
+
 CORTO_T_STD_EXPORT corto_bool _corto_t_std_declared(
     corto_value* arg1,
     corto_value* arg2,

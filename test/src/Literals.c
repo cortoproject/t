@@ -48,6 +48,46 @@ corto_void _test_Literals_tc_number(
 /* $end */
 }
 
+corto_void _test_Literals_tc_numberFloat(
+    test_Literals this)
+{
+/* $begin(test/Literals/tc_numberFloat) */
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${10.5}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "10.500000");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Literals_tc_numberNegative(
+    test_Literals this)
+{
+/* $begin(test/Literals/tc_numberNegative) */
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${-10}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "-10.000000");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Literals_tc_string(
     test_Literals this)
 {

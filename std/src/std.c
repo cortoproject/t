@@ -9,6 +9,8 @@
 #include <corto/t/std/std.h>
 
 /* $header() */
+#include "math.h"
+
 static corto_bool corto_t_std_if_intern(
     corto_value *arg,
     corto_bool invert,
@@ -59,6 +61,50 @@ struct corto_serializer_s corto_t_ser() {
     return s;
 }
 /* $end */
+
+corto_int64 _corto_t_std_abs(
+    corto_int64 arg)
+{
+/* $begin(corto/t/std/abs) */
+
+    return llabs(arg);
+
+/* $end */
+}
+
+corto_uint64 _corto_t_std_count(
+    corto_value* arg,
+    corto_t_block* block,
+    corto_value* chainArg,
+    corto_word ctx)
+{
+/* $begin(corto/t/std/count) */
+    corto_type t = corto_value_getType(arg);
+    corto_uint64 result = 0;
+
+    if (t->kind == CORTO_COLLECTION) {
+        void *ptr = corto_value_getPtr(arg);
+        switch(corto_collection(t)->kind) {
+        case CORTO_ARRAY:
+            result = corto_collection(t)->max;
+            break;
+        case CORTO_SEQUENCE:
+            result = ((corto_objectseq*)ptr)->length;
+            break;
+        case CORTO_LIST:
+            result = corto_llSize(*(corto_ll*)ptr);
+            break;
+        case CORTO_MAP:
+            result = corto_rbtreeSize(*(corto_rbtree*)ptr);
+            break;
+        }
+    } else if (t->kind == CORTO_COMPOSITE) {
+        result = corto_interface(t)->members.length;
+    }
+
+    return result;
+/* $end */
+}
 
 corto_bool _corto_t_std_declared(
     corto_value* arg1,

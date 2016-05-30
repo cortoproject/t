@@ -12,6 +12,7 @@ t/function elif: requiresBlock=true returnType=bool argType=bool chainType=bool 
 t/function elifn: requiresBlock=true returnType=bool argType=bool chainType=bool echo=false chain=true
 t/function @else: requiresBlock=true chainType=bool chain=true
 t/function each: requiresBlock=true
+t/function count: returnType=uint64
 
 t/comparator scoped{}
 t/comparator persistent{}
@@ -24,3 +25,4 @@ t/comparator instanceof: argType=lang/type
 
 string upper(string arg)
 string lower(string arg)
+int64 abs(int64 arg)

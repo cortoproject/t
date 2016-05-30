@@ -1,4 +1,13 @@
 # /corto/t/std
+### abs(int64 arg)
+#### arg
+#### Returns
+### count
+#### arg
+#### block
+#### chainArg
+#### ctx
+#### Returns
 ### declared
 #### arg1
 #### arg2

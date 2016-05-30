@@ -163,6 +163,33 @@ corto_void _test_Function_tc_functionNotExist(
 /* $end */
 }
 
+corto_void _test_Function_tc_functionNum(
+    test_Function this)
+{
+/* $begin(test/Function/tc_functionNum) */
+    test_Point p = {10, 20};
+    corto_t_var vars[] = {
+        {"var", corto_value_value(test_Point_o, &p)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${count var}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "2");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Function_tc_functionObject(
     test_Function this)
 {
