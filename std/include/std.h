@@ -136,6 +136,12 @@ CORTO_T_STD_EXPORT corto_float64 _corto_t_std_pow(
     corto_float64 exponent);
 #define corto_t_std_pow(base, exponent) _corto_t_std_pow(base, exponent)
 
+CORTO_T_STD_EXPORT corto_string _corto_t_std_replace(
+    corto_string s,
+    corto_string old,
+    corto_string _new);
+#define corto_t_std_replace(s, old, _new) _corto_t_std_replace(s, old, _new)
+
 CORTO_T_STD_EXPORT corto_void _corto_t_std_scope(
     corto_value* arg,
     corto_t_block* block,

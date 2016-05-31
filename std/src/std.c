@@ -387,6 +387,18 @@ corto_float64 _corto_t_std_pow(
 /* $end */
 }
 
+corto_string _corto_t_std_replace(
+    corto_string s,
+    corto_string old,
+    corto_string _new)
+{
+/* $begin(corto/t/std/replace) */
+
+    return corto_replace(s, old, _new);
+
+/* $end */
+}
+
 corto_void _corto_t_std_scope(
     corto_value* arg,
     corto_t_block* block,

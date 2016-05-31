@@ -490,7 +490,7 @@ static corto_t_op* corto_t_filter(corto_t_slice filter, corto_t_compile_t *data)
 
     f = corto_t_resolve(filterId, corto_type(corto_function_o), data);
     if (!f) {
-        corto_t_err(data, "unknown function", filter.ptr);
+        corto_t_err(data, "unknown filter", filter.ptr);
         goto error;
     }
 

@@ -398,10 +398,22 @@ static void corto_t_runFilter(corto_t_op *op, corto_t_run_t *data) {
     /* Parse pushed arguments */
     int i;
     for (i = 0; i < data->argCount; i++) {
+        corto_string str = NULL;
+
+        /* Allocate memory on stack for string literals */
+        if (data->args[i]->kind == CORTO_T_LITERAL) {
+            corto_t_expr *expr = data->args[i];
+            if ((expr->expr.literal.type->kind == CORTO_PRIMITIVE) &&
+               (corto_primitive(expr->expr.literal.type)->kind == CORTO_TEXT))
+           {
+                str = alloca(sizeof(corto_id));
+           }
+        }
+
         argValues[i + 1] = *corto_t_parseExpr(
             data->args[i],
             &argValues[i + 1],
-            NULL,
+            str,
             data);
     }
 

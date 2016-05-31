@@ -117,6 +117,34 @@ corto_void _test_Filter_tc_filterFunctionOneArg(
 /* $end */
 }
 
+corto_void _test_Filter_tc_filterFunctionTwoArgs(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterFunctionTwoArgs) */
+    corto_stringCreateChild_auto(root_o, HelloWorld, "foo");
+
+    corto_t_var vars[] = {
+        {"var", corto_value_object(HelloWorld, NULL)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${name var | replace(\"Hello\", \"Goodbye\")}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "GoodbyeWorld");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
 corto_void _test_Filter_tc_filterLiteral(
     test_Filter this)
 {
@@ -188,6 +216,26 @@ corto_void _test_Filter_tc_filterLiteralOneArg(
     corto_string str = corto_t_run(t, NULL);
     test_assert(str != NULL);
     test_assertstr(str, "4.000000");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Filter_tc_filterLiteralTwoArgs(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterLiteralTwoArgs) */
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${\"Hello World\" | replace(\"Hello\", \"Goodbye\")}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "Goodbye World");
 
     corto_dealloc(str);
     corto_t_free(t);
@@ -295,6 +343,33 @@ corto_void _test_Filter_tc_filterVariableOneArg(
     corto_string str = corto_t_run(t, &ctx);
     test_assert(str != NULL);
     test_assertstr(str, "100.000000");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Filter_tc_filterVariableTwoArgs(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterVariableTwoArgs) */
+    corto_string v_str = "Hello World";
+    corto_t_var vars[] = {
+        {"var", corto_value_value(corto_string_o, &v_str)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${var | replace(\"Hello\", \"Goodbye\")}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "Goodbye World");
 
     corto_dealloc(str);
     corto_t_free(t);

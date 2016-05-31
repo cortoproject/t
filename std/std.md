@@ -92,6 +92,11 @@
 #### base
 #### exponent
 #### Returns
+### replace(string s,string old,string new)
+#### s
+#### old
+#### new
+#### Returns
 ### scope
 #### arg
 #### block

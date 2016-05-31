@@ -25,6 +25,8 @@ t/comparator instanceof: argType=lang/type
 
 string upper(string arg)
 string lower(string arg)
+string replace(string s, string old, string new)
+
 int64 abs(int64 arg)
 float64 pow(float64 base, float64 exponent)
 
