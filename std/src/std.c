@@ -51,7 +51,7 @@ corto_int16 corto_t_ser_item(
     return 0;
 }
 
-struct corto_serializer_s corto_t_ser() {
+struct corto_serializer_s corto_t_ser(void) {
     struct corto_serializer_s s;
     corto_serializerInit(&s);
     s.access = CORTO_PRIVATE | CORTO_LOCAL;

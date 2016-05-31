@@ -382,6 +382,7 @@ static void corto_t_runFilter(corto_t_op *op, corto_t_run_t *data) {
     void *args[CORTO_T_MAX_ARGS];
     corto_value argValues[CORTO_T_MAX_ARGS];
     corto_bool argAlloc[CORTO_T_MAX_ARGS];
+    corto_string emptyStr = "";
 
     /* Allocate temporary memory for function returnvalue on stack */
     if (returnType && (returnType->kind != CORTO_VOID)) {
@@ -415,6 +416,11 @@ static void corto_t_runFilter(corto_t_op *op, corto_t_run_t *data) {
             &argValues[i + 1],
             str,
             data);
+    }
+
+    /* If not all arguments are provided, supplement with default values */
+    for (i = data->argCount; i < f->parameters.length - 1; i++) {
+        argValues[i + 1] = corto_value_value(corto_string_o, &emptyStr);
     }
 
     /* Cast arguments */
