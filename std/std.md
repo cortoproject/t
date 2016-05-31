@@ -88,6 +88,10 @@
 #### arg2
 #### ctx
 #### Returns
+### pow(float64 base,float64 exponent)
+#### base
+#### exponent
+#### Returns
 ### scope
 #### arg
 #### block
@@ -97,6 +101,9 @@
 #### arg1
 #### arg2
 #### ctx
+#### Returns
+### toint(float64 arg)
+#### arg
 #### Returns
 ### type
 #### arg

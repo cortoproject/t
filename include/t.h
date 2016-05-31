@@ -26,6 +26,9 @@
 /* Maximum nesting depth for frames */
 #define CORTO_T_FRAME_DEPTH (16)
 
+/* Maximum number of arguments for filter */
+#define CORTO_T_MAX_ARGS (16)
+
 typedef struct corto_t corto_t;
 
 typedef struct corto_t_var {

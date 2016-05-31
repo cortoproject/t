@@ -91,11 +91,17 @@ test/suite Chain::
 
 test/suite Filter::
     void tc_filterLiteral()
-    void tc_filterVariable()
-    void tc_filterFunction()
     void tc_filterLiteralNum()
+    void tc_filterLiteralNumChain()
+    void tc_filterLiteralOneArg()
+    void tc_filterVariable()
     void tc_filterVariableNum()
+    void tc_filterVariableNumChain()
+    void tc_filterVariableOneArg()
+    void tc_filterFunction()
     void tc_filterFunctionNum()
+    void tc_filterFunctionNumChain()
+    void tc_filterFunctionOneArg()
 
 test/suite DefaultVar::
     void tc_default()

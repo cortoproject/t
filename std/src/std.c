@@ -378,6 +378,15 @@ corto_bool _corto_t_std_persistent(
 /* $end */
 }
 
+corto_float64 _corto_t_std_pow(
+    corto_float64 base,
+    corto_float64 exponent)
+{
+/* $begin(corto/t/std/pow) */
+    return pow(base, exponent);
+/* $end */
+}
+
 corto_void _corto_t_std_scope(
     corto_value* arg,
     corto_t_block* block,
@@ -407,6 +416,16 @@ corto_bool _corto_t_std_scoped(
     } else {
         return FALSE;
     }
+
+/* $end */
+}
+
+corto_uint64 _corto_t_std_toint(
+    corto_float64 arg)
+{
+/* $begin(corto/t/std/toint) */
+
+    return (corto_uint64)arg;
 
 /* $end */
 }

@@ -13,6 +13,8 @@ typedef struct corto_t_run_t {
     corto_buffer buf;
     corto_t_frame *globals;
     corto_t_frame *stack[CORTO_T_FRAME_DEPTH];
+    corto_t_expr *args[CORTO_T_MAX_ARGS];
+    corto_int32 argCount;
     corto_value chain; /* For chaining functions */
     corto_value reg; /* For communicating values between operations */
     corto_id regStr; /* For storing reg string literals */
@@ -376,9 +378,10 @@ static corto_bool corto_t_runFunction(corto_t_op *op, corto_value  *out, corto_t
 static void corto_t_runFilter(corto_t_op *op, corto_t_run_t *data) {
     corto_function f = op->data.filter.filter;
     corto_type returnType = corto_function(f)->returnType;
-    corto_value *arg = NULL, argMem;
-    corto_bool freeArg = FALSE;
     void *result = NULL;
+    void *args[CORTO_T_MAX_ARGS];
+    corto_value argValues[CORTO_T_MAX_ARGS];
+    corto_bool argAlloc[CORTO_T_MAX_ARGS];
 
     /* Allocate temporary memory for function returnvalue on stack */
     if (returnType && (returnType->kind != CORTO_VOID)) {
@@ -389,23 +392,45 @@ static void corto_t_runFilter(corto_t_op *op, corto_t_run_t *data) {
         }
     }
 
-    argMem = data->reg;
-    arg = &argMem;
-    freeArg = corto_t_castValue(arg, corto_type(f->parameters.buffer[0].type));
+    /* Prepare first argument (from left-side of expression) */
+    argValues[0] = data->reg;
+
+    /* Parse pushed arguments */
+    int i;
+    for (i = 0; i < data->argCount; i++) {
+        argValues[i + 1] = *corto_t_parseExpr(
+            data->args[i],
+            &argValues[i + 1],
+            NULL,
+            data);
+    }
+
+    /* Cast arguments */
+    for (i = 0; i < f->parameters.length; i++) {
+        argAlloc[i] = corto_t_castValue(
+            &argValues[i],
+            f->parameters.buffer[i].type);
+    }
+
+    /* Create pointer array */
+    for (i = 0; i < f->parameters.length; i++) {
+        args[i] = corto_value_getPtr(&argValues[i]);
+    }
 
     /* Invoke function */
-    corto_callb(
-        f,
-        result,
-        (void*[]){corto_value_getPtr(arg)});
+    corto_callb(f, result, args);
 
     /* Free arg if casted */
-    if (freeArg) {
-        corto_string *str = corto_value_getPtr(arg);
-        if (str && *str) {
-            corto_dealloc(*str);
+    for (i = 0; i < f->parameters.length; i++) {
+        if (argAlloc[i]) {
+            corto_string *str = corto_value_getPtr(&argValues[i]);
+            if (str && *str) {
+                corto_dealloc(*str);
+            }
         }
     }
+
+    data->argCount = 0;
 
     /* Free last result */
     corto_t_cleanreg(data);
@@ -501,6 +526,10 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
         corto_t_runComparator(op, data);
         break;
 
+    case CORTO_T_PUSH:
+        data->args[data->argCount ++] = &op->data.push.expr;
+        break;
+
     case CORTO_T_FILTER:
         corto_t_runFilter(op, data);
         break;
@@ -515,7 +544,7 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 
 corto_string corto_t_run(corto_t *t, corto_t_frame *globals) {
     corto_string result = NULL;
-    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, {0}, {0}, {'\0'}, FALSE, FALSE, 0, &t->ops, 0};
+    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, {NULL}, 0, {0}, {0}, {'\0'}, FALSE, FALSE, 0, &t->ops, 0};
     data.vars.count = 0;
     data.vars.next = 0;
     data.chain = corto_value_value(NULL, NULL);

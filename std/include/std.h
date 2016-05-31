@@ -131,6 +131,11 @@ CORTO_T_STD_EXPORT corto_bool _corto_t_std_persistent(
     corto_word ctx);
 #define corto_t_std_persistent(arg1, arg2, ctx) _corto_t_std_persistent(arg1, arg2, ctx)
 
+CORTO_T_STD_EXPORT corto_float64 _corto_t_std_pow(
+    corto_float64 base,
+    corto_float64 exponent);
+#define corto_t_std_pow(base, exponent) _corto_t_std_pow(base, exponent)
+
 CORTO_T_STD_EXPORT corto_void _corto_t_std_scope(
     corto_value* arg,
     corto_t_block* block,
@@ -143,6 +148,10 @@ CORTO_T_STD_EXPORT corto_bool _corto_t_std_scoped(
     corto_value* arg2,
     corto_word ctx);
 #define corto_t_std_scoped(arg1, arg2, ctx) _corto_t_std_scoped(arg1, arg2, ctx)
+
+CORTO_T_STD_EXPORT corto_uint64 _corto_t_std_toint(
+    corto_float64 arg);
+#define corto_t_std_toint(arg) _corto_t_std_toint(arg)
 
 CORTO_T_STD_EXPORT corto_type _corto_t_std_type(
     corto_value* arg,

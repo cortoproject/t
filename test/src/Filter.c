@@ -39,7 +39,7 @@ corto_void _test_Filter_tc_filterFunction(
 corto_void _test_Filter_tc_filterFunctionNum(
     test_Filter this)
 {
-/* $begin(test/Identifier/tc_identifierMember) */
+/* $begin(test/Filter/tc_filterFunctionNum) */
     test_Point p = {10, 20};
     corto_t_var vars[] = {
         {"var", corto_value_value(test_Point_o, &p)},
@@ -56,6 +56,60 @@ corto_void _test_Filter_tc_filterFunctionNum(
     corto_string str = corto_t_run(t, &ctx);
     test_assert(str != NULL);
     test_assertstr(str, "2");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Filter_tc_filterFunctionNumChain(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterFunctionNumChain) */
+    test_Point p = {10, 20};
+    corto_t_var vars[] = {
+        {"var", corto_value_value(test_Point_o, &p)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${count var | pow(2) | toint}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "4");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Filter_tc_filterFunctionOneArg(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterFunctionOneArg) */
+    test_Point p = {10, 20};
+    corto_t_var vars[] = {
+        {"var", corto_value_value(test_Point_o, &p)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${count var | pow(2)}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "4.000000");
 
     corto_dealloc(str);
     corto_t_free(t);
@@ -97,6 +151,47 @@ corto_void _test_Filter_tc_filterLiteralNum(
 
     corto_dealloc(str);
     corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Filter_tc_filterLiteralNumChain(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterLiteralNumChain) */
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${10 | pow(2) | toint}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "100");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Filter_tc_filterLiteralOneArg(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterLiteralOneArg) */
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${2 | pow(2)}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, NULL);
+    test_assert(str != NULL);
+    test_assertstr(str, "4.000000");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
 /* $end */
 }
 
@@ -150,5 +245,59 @@ corto_void _test_Filter_tc_filterVariableNum(
 
     corto_dealloc(str);
     corto_t_free(t);
+/* $end */
+}
+
+corto_void _test_Filter_tc_filterVariableNumChain(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterVariableNumChain) */
+    corto_int64 v_num = -10;
+    corto_t_var vars[] = {
+        {"var", corto_value_value(corto_int64_o, &v_num)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${var | pow(2) | toint}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "100");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
+/* $end */
+}
+
+corto_void _test_Filter_tc_filterVariableOneArg(
+    test_Filter this)
+{
+/* $begin(test/Filter/tc_filterVariableOneArg) */
+    corto_int64 v_num = -10;
+    corto_t_var vars[] = {
+        {"var", corto_value_value(corto_int64_o, &v_num)},
+        {NULL}
+    };
+
+    corto_t_frame ctx = {findvar, vars};
+
+    /* Compile template */
+    corto_t *t = corto_t_compile("${var | pow(2)}");
+    test_assert(t != NULL);
+
+    /* Run template with context and print result */
+    corto_string str = corto_t_run(t, &ctx);
+    test_assert(str != NULL);
+    test_assertstr(str, "100.000000");
+
+    corto_dealloc(str);
+    corto_t_free(t);
+
 /* $end */
 }

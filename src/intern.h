@@ -18,7 +18,8 @@ typedef enum corto_t_opKind {
     CORTO_T_FUNCTION = 6,
     CORTO_T_FUNCTION_CHAIN = 8,
     CORTO_T_COMPARATOR = 10,
-    CORTO_T_FILTER = 12
+    CORTO_T_PUSH = 12,
+    CORTO_T_FILTER = 14
 } corto_t_opKind;
 
 /* A slice of the template string */
@@ -87,6 +88,9 @@ typedef struct corto_t_op {
             corto_t_comparator comparator;
             corto_t_expr arg;
         } comparator;
+        struct {
+            corto_t_expr expr;
+        } push;
         struct {
             corto_function filter;
         } filter;

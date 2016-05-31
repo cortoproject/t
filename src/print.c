@@ -97,6 +97,11 @@ static void corto_t_printop(corto_t_op *op) {
         corto_t_printexpr(&op->data.comparator.arg);
         printf("'\n");
         break;
+    case CORTO_T_PUSH:
+        printf("   PUSH     '");
+        corto_t_printexpr(&op->data.val.expr);
+        printf("'\n");
+        break;
     case CORTO_T_FILTER:
         printf("%s FILTER   '%s'\n", corto_t_printroute(op), corto_idof(op->data.filter.filter));
         break;

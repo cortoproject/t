@@ -481,9 +481,10 @@ static corto_int16 corto_t_forward(corto_t_slice fwd, corto_t_slice arg, corto_t
     return 0;
 }
 
-static corto_int16 corto_t_filter(corto_t_slice filter, corto_t_compile_t *data) {
+static corto_t_op* corto_t_filter(corto_t_slice filter, corto_t_compile_t *data) {
     corto_function f;
     corto_id filterId;
+    corto_t_op *result = NULL;
 
     corto_t_copySliceToString(filterId, filter);
 
@@ -493,13 +494,13 @@ static corto_int16 corto_t_filter(corto_t_slice filter, corto_t_compile_t *data)
         goto error;
     }
 
-    if (!corto_t_addFilter(f, data)) {
+    if (!(result = corto_t_addFilter(f, data))) {
         goto error;
     }
 
-    return 0;
+    return result;
 error:
-    return -1;
+    return NULL;
 }
 
 static corto_t_op* corto_t_func(
@@ -624,15 +625,69 @@ error:
     return NULL;
 }
 
+static corto_t_op* corto_t_addPush(corto_t_expr *expr, corto_t_compile_t *data) {
+    corto_t_op *op = corto_t_nextOp(data);
+    op->kind = CORTO_T_PUSH;
+    op->data.val.expr = *expr;
+    return op;
+}
+
+static char* corto_t_section_filterArgs(
+    char* start,
+    corto_t_slice filter,
+    corto_t_compile_t *data)
+{
+    corto_t_expr expr;
+
+    char *ptr = start;
+    ptr = corto_t_skipspace(ptr);
+    do {
+        ptr = corto_t_parseExpr(ptr, &expr, data);
+        if (!ptr) {
+            goto error;
+        }
+
+        if (!corto_t_addPush(&expr, data)) {
+            corto_t_err(data, "parser error: failed to add push", start);
+            goto error;
+        }
+
+        ptr = corto_t_skipspace(ptr + 1);
+
+        if (*ptr == ',') {
+            ptr = corto_t_skipspace(ptr + 1);
+        } else {
+            break;
+        }
+    } while (1);
+
+    if (*ptr != ')') {
+        corto_t_err(data, "unexpected token after argument list", start);
+        goto error;
+    }
+
+    return ptr + 1;
+error:
+    return NULL;
+}
+
 static char* corto_t_section_filter(
     char *start,
     corto_t_compile_t *data)
 {
     corto_t_slice filter;
+    corto_t_op *op = NULL;
     char *ptr = corto_t_skipspace(start);
 
     do {
         if (*ptr == '|') ptr ++;
+
+        ptr = corto_t_skipspace(ptr);
+
+        /* Ensure previous filter (if any) writes result to register */
+        if (op) {
+            op->kind |= CORTO_T_TOREG;
+        }
 
         /* Parse filter identifier */
         char *end = corto_t_id(ptr, data);
@@ -641,15 +696,25 @@ static char* corto_t_section_filter(
         } else {
             filter = (corto_t_slice){ptr, 1 + end - ptr};
         }
-
-        corto_t_filter(filter, data);
-
         ptr = corto_t_skipspace(end + 1);
+
+        /* Check for argument list */
+        if (*ptr == '(') {
+            ptr = corto_t_section_filterArgs(ptr + 1, filter, data);
+            if (!ptr) {
+                goto error;
+            }
+        }
+
+        op = corto_t_filter(filter, data);
+
+        ptr = corto_t_skipspace(ptr);
+
     } while (*ptr && *ptr == '|');
 
     /* Filters must end with a close token */
     if (*ptr != CORTO_T_CLOSE) {
-        corto_t_err(data, "unexpected token after filter", start);
+        corto_t_err(data, "unexpected token after filter", ptr);
         goto error;
     }
 
