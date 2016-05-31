@@ -3,4 +3,7 @@ PACKAGE = 'corto/t/std'
 
 PREFIX = 'corto/t/std'
 
+LIB = ['m']
+LIB_PUBLIC = [] # projects don't need to link m
+
 require "#{ENV['CORTO_BUILD']}/package"
