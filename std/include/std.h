@@ -12,11 +12,11 @@
 /* You can put your own definitions here! */
 /* $end */
 
+#include <corto/t/t.h>
+
 #include <corto/t/std/_type.h>
 #include <corto/t/std/_api.h>
 #include <corto/t/std/_meta.h>
-
-#include <corto/t/t.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -64,10 +64,10 @@ CORTO_T_EXPORT void corto_t_print(corto_t *t);
 
 /* $end */
 
+
 #include <corto/t/_type.h>
 #include <corto/t/_api.h>
 #include <corto/t/_meta.h>
-
 
 #ifdef __cplusplus
 extern "C" {

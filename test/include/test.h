@@ -13,12 +13,12 @@
 corto_t_var* findvar(corto_string key, void *data);
 /* $end */
 
+#include <corto/t/t.h>
+#include <corto/test/test.h>
+
 #include <_type.h>
 #include <_api.h>
 #include <_meta.h>
-
-#include <corto/t/t.h>
-#include <corto/test/test.h>
 
 #ifdef __cplusplus
 extern "C" {

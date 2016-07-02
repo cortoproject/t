@@ -13,28 +13,28 @@ corto_int16 _corto_t_function_init(
 {
 /* $begin(corto/t/function/init) */
 
-    corto_parameterSet(
+    corto_parameterAssign(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "arg",
         corto_t_value_o,
         FALSE
     );
 
-    corto_parameterSet(
+    corto_parameterAssign(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "block",
         corto_t_block_o,
         FALSE
     );
 
-    corto_parameterSet(
+    corto_parameterAssign(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "chainArg",
         corto_t_value_o,
         FALSE
     );
 
-    corto_parameterSet(
+    corto_parameterAssign(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "ctx",
         corto_word_o,

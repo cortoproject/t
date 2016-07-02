@@ -13,21 +13,21 @@ corto_int16 _corto_t_comparator_init(
 {
 /* $begin(corto/t/comparator/init) */
 
-    corto_parameterSet(
+    corto_parameterAssign(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "arg1",
         corto_t_value_o,
         FALSE
     );
 
-    corto_parameterSet(
+    corto_parameterAssign(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "arg2",
         corto_t_value_o,
         FALSE
     );
 
-    corto_parameterSet(
+    corto_parameterAssign(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "ctx",
         corto_word_o,
