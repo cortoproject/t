@@ -5,7 +5,7 @@ t/function name: requiresBlock=false returnType=string
 t/function parent: requiresBlock=false returnType=object
 t/function type: requiresBlock=false returnType=lang/type
 
-t/function @scope: requiresBlock=true
+t/function scope: requiresBlock=true
 t/function @if: requiresBlock=true returnType=bool argType=bool echo=false
 t/function ifn: requiresBlock=true returnType=bool argType=bool echo=false
 t/function elif: requiresBlock=true returnType=bool argType=bool chainType=bool echo=false chain=true
