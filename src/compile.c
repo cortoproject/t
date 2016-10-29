@@ -297,6 +297,8 @@ static char* corto_t_parseExpr(char *start, corto_t_expr *out, corto_t_compile_t
                         out->expr.identifier_member.identifier.len = 1 + ptr - start;
                         out->expr.identifier_member.idLen = member - start;
                     }
+                    // Catch error
+                    corto_lasterr();
                 }
             }
         } else {
