@@ -7,19 +7,21 @@
 #define TEST_H
 
 #include <corto/corto.h>
-#include <_interface.h>
+#include <_project.h>
 /* $header() */
 #include <corto/t/t.h>
 corto_t_var* findvar(corto_string key, void *data);
 /* $end */
 
-#include <corto/t/t.h>
 #include <corto/test/test.h>
+#include <corto/t/t.h>
+#include <corto/core/c/c.h>
+#include <corto/lang/c/c.h>
 
 #include <_type.h>
-#include <_api.h>
-#include <_meta.h>
 
+#include <_api.h>
+#include <_load.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

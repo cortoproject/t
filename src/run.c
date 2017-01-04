@@ -273,7 +273,7 @@ static void corto_t_write(corto_t_op *op, corto_value *val, corto_t_run_t *data)
 
         if (toReg || toChain) {
             corto_value *dst;
-            corto_bool *hasAlloc;
+            corto_bool *hasAlloc = NULL;
 
             if (toReg) {
                 dst = &data->reg;

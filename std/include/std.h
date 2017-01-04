@@ -7,17 +7,19 @@
 #define CORTO_T_STD_H
 
 #include <corto/corto.h>
-#include <corto/t/std/_interface.h>
+#include <corto/t/std/_project.h>
 /* $header() */
 /* You can put your own definitions here! */
 /* $end */
 
 #include <corto/t/t.h>
+#include <corto/core/c/c.h>
+#include <corto/lang/c/c.h>
 
 #include <corto/t/std/_type.h>
-#include <corto/t/std/_api.h>
-#include <corto/t/std/_meta.h>
 
+#include <corto/t/std/_api.h>
+#include <corto/t/std/_load.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
