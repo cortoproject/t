@@ -6,7 +6,7 @@
  * when the file is regenerated.
  */
 
-#include <test.h>
+#include <include/test.h>
 
 corto_void _test_Identifier_tc_identifier(
     test_Identifier this)
@@ -671,6 +671,7 @@ corto_void _test_Identifier_tc_identifrObjectNotExistMember(
     /* Compile template */
     corto_t *t = corto_t_compile("{$/p.x, $/p.y}");
     test_assert(t == NULL);
+    test_assertstr(corto_lasterr(), "object '/p' not found");
 
 /* $end */
 }

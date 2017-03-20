@@ -32,6 +32,7 @@ static corto_bool corto_t_std_if_intern(
 typedef struct corto_t_ser_t {
     corto_t_block *block;
     corto_word ctx;
+    corto_uint64 n;
 } corto_t_ser_t;
 
 corto_int16 corto_t_ser_item(
@@ -40,13 +41,20 @@ corto_int16 corto_t_ser_item(
     void *userData)
 {
     corto_t_ser_t *data = userData;
-    corto_t_var v = {"", *info};
 
-    corto_t_frame f = {corto_t_finddefault, &v};
+    corto_t_var v[] = {
+        {"", *info},
+        {"n", corto_value_literalInteger(data->n)},
+        {NULL}
+    };
+
+    corto_t_frame f = {corto_t_finddefault, v};
 
     corto_t_pushframe(&f, data->ctx);
     corto_t_block_run(data->block, data->ctx);
     corto_t_popframe(data->ctx);
+
+    data->n ++;
 
     return 0;
 }
@@ -152,7 +160,7 @@ corto_void _corto_t_std_each(
 {
 /* $begin(corto/t/std/each) */
     struct corto_serializer_s s = corto_t_ser();
-    corto_t_ser_t walkData = {block, ctx};
+    corto_t_ser_t walkData = {block, ctx, 0};
 
     corto_serializeValue(&s, arg, &walkData);
 /* $end */
@@ -494,7 +502,7 @@ corto_bool _corto_t_std_valid(
 /* $end */
 }
 
-int stdMain(int argc, char* argv[]) {
+int stdMain(int argc, char *argv[]) {
 /* $begin(main) */
 
     /* Insert code that must be run when component is loaded */

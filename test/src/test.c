@@ -6,7 +6,7 @@
  * when the file is regenerated.
  */
 
-#include <test.h>
+#include <include/test.h>
 
 /* $header() */
 corto_t_var* findvar(corto_string key, void *data) {
@@ -23,7 +23,7 @@ corto_t_var* findvar(corto_string key, void *data) {
 }
 /* $end */
 
-int testMain(int argc, char* argv[]) {
+int testMain(int argc, char *argv[]) {
 /* $begin(main) */
     int result = 0;
     test_Runner runner = test_RunnerCreate("corto/t", argv[0], (argc > 1) ? argv[1] : NULL);

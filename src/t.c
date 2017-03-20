@@ -8,7 +8,7 @@
 
 #include <corto/t/t.h>
 
-int tMain(int argc, char* argv[]) {
+int tMain(int argc, char *argv[]) {
 /* $begin(main) */
 
     /* Insert code that must be run when component is loaded */

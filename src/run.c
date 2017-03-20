@@ -214,20 +214,13 @@ static corto_bool corto_t_castValue(
     corto_bool freeArg = FALSE;
 
     /* Cast argument if necessary (chainArg always matches type) */
-    if (v) {
-        corto_type vType = corto_value_getType(v);
-        if (vType && type && (type != vType)) {
-            /* For now only support primitive conversions */
-            if ((vType->kind == CORTO_PRIMITIVE) && (type->kind == CORTO_PRIMITIVE)) {
-                void *src = corto_value_getPtr(v);
-                *v = corto_value_value(type, NULL);
-                corto_convert(vType, src, type, &v->is.value.storage);
-                v->is.value.v = &v->is.value.storage;
-                if (corto_primitive(type)->kind == CORTO_TEXT) {
-                    freeArg = TRUE;
-                }
-            }
+    if (v && type && type->kind == CORTO_PRIMITIVE) {
+        if (corto_value_cast(v, type, v)) {
+            // error
         }
+        if (corto_primitive(type)->kind == CORTO_TEXT) {
+            freeArg = TRUE;
+        }  
     }
 
     return freeArg;
@@ -283,7 +276,7 @@ static void corto_t_write(corto_t_op *op, corto_value *val, corto_t_run_t *data)
                 hasAlloc = &data->cleanChain;
             }
 
-            if (val->kind == CORTO_OBJECT) {
+            if ((val->kind == CORTO_OBJECT) || (val->kind == CORTO_LITERAL)) {
                 *(corto_value*)dst = *val;
             } else if (val->kind == CORTO_VALUE) {
                 void *ptr = NULL;
@@ -324,8 +317,12 @@ static corto_bool corto_t_runFunction(corto_t_op *op, corto_value  *out, corto_t
     corto_bool jumped = FALSE;
     void *result = NULL;
 
+    corto_bool oldCleanReg = data->cleanReg, oldCleanChain = data->cleanChain;
+    data->cleanReg = FALSE;
+    data->cleanChain = FALSE;
+
     /* Allocate temporary memory for function returnvalue on stack */
-    if (returnType && (returnType->kind != CORTO_VOID)) {
+    if (returnType && ((returnType->kind != CORTO_VOID) || returnType->reference)) {
         if (corto_function(f)->returnsReference) {
             result = alloca(sizeof(corto_object));
         } else {
@@ -371,6 +368,9 @@ static corto_bool corto_t_runFunction(corto_t_op *op, corto_value  *out, corto_t
         corto_t_block_jump(&op->data.function.block, data);
         jumped = TRUE;
     }
+
+    data->cleanReg = oldCleanReg;
+    data->cleanChain = oldCleanChain;
 
     return jumped;
 }
@@ -562,7 +562,21 @@ static corto_bool corto_t_runop(corto_t_op *op, corto_t_run_t *data) {
 
 corto_string corto_t_run(corto_t *t, corto_t_frame *globals) {
     corto_string result = NULL;
-    corto_t_run_t data = {t, CORTO_BUFFER_INIT, globals, {NULL}, {NULL}, 0, {0}, {0}, {'\0'}, FALSE, FALSE, 0, &t->ops, 0};
+    corto_t_run_t data = {
+        .t = t, 
+        .buf = CORTO_BUFFER_INIT, 
+        .globals = globals, 
+        .stack = {NULL}, 
+        .args = {NULL}, 
+        .argCount = 0, 
+        .chain = {0}, 
+        .reg = {0}, 
+        .regStr = {'\0'}, 
+        .cleanChain = FALSE, 
+        .cleanReg = FALSE, 
+        .sp = 0, 
+        .current = &t->ops};
+
     data.vars.count = 0;
     data.vars.next = 0;
     data.chain = corto_value_value(NULL, NULL);
@@ -616,9 +630,18 @@ void corto_t_popframe(corto_word ctx) {
 }
 
 corto_t_var* corto_t_finddefault(corto_string var, void *data) {
-    if (!var || !strlen(var) || !strcmp(var, ".")) {
-        return (corto_t_var*)data;
+    corto_t_var *vars = data;
+
+    if (!var || !var[0] || !strcmp(var, ".")) {
+        return vars;
     } else {
-        return NULL;
+        corto_int32 i;
+        for (i = 1; vars[i].key != NULL; i++) {
+            if (!strcmp(vars[i].key, var)) {
+                return &vars[i];
+            }
+        }
     }
+
+    return NULL;
 }

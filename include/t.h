@@ -7,7 +7,11 @@
 #define CORTO_T_H
 
 #include <corto/corto.h>
+#include <corto/corto.h>
 #include <corto/t/_project.h>
+#include <corto/core/c/c.h>
+#include <corto/lang/c/c.h>
+
 /* $header() */
 
 #define CORTO_T_SIGIL '$'
@@ -64,22 +68,23 @@ CORTO_T_EXPORT void corto_t_print(corto_t *t);
 
 /* $end */
 
-#include <corto/core/c/c.h>
-#include <corto/lang/c/c.h>
-
 #include <corto/t/_type.h>
-
-#include <corto/t/_api.h>
 #include <corto/t/_load.h>
+#include <corto/t/_api.h>
+
+/* $body() */
+/* Enter code that requires types here */
+/* $end */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include <corto/t/comparator.h>
 #include <corto/t/function.h>
 
 #ifdef __cplusplus
 }
 #endif
+
 #endif
 

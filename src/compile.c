@@ -85,17 +85,21 @@ static corto_object corto_t_resolve(
     corto_uint32 i = 0;
     corto_object result = NULL;
 
-    do {
-        while (!result && (i < buf->count)) {
-            corto_object op = buf->imports[i];
-            result = corto_lookup(op, id);
-            if (result && !corto_instanceof(t, result)) {
-                corto_t_err(data, "identifier of unexpected type", id);
-                goto error;
+    if (strcmp(id, ".")) {
+        do {
+            while (!result && (i < buf->count)) {
+                corto_object op = buf->imports[i];
+                result = corto_lookup(op, id);
+                if (result && !corto_instanceof(t, result)) {
+                    corto_t_err(data, "identifier of unexpected type", id);
+                    goto error;
+                } else {
+                    corto_lasterr();
+                }
+                i ++;
             }
-            i ++;
-        }
-    } while (!result && (buf = buf->next));
+        } while (!result && (buf = buf->next));
+    }
 
     return result;
 error:
@@ -862,17 +866,24 @@ static char* corto_t_section(char *start, corto_t_compile_t *data) {
                 corto_id varId;
                 corto_t_function f;
                 corto_t_copySliceToString(varId, id);
-                if ((f = corto_t_resolve(varId, corto_type(corto_t_function_o), data))) {
+
+                if (isalpha(varId[0]) && (f = corto_t_resolve(varId, corto_type(corto_t_function_o), data))) {
                     if (corto_t_prepareChain(f, data)) {
                         goto error;
+                    } else {
+                        corto_lasterr();
                     }
                     if (!corto_t_addFunction(f, data)) {
                         goto error;
+                    } else {
+                        corto_lasterr();
                     }
                 } else {
                     /* Otherwise add value to template program */
                     if (!corto_t_addVal(NULL, 0, &expr, CORTO_T_TOBUFF, data)) {
                         goto error;
+                    } else {
+                        corto_lasterr();
                     }
                 }
             }

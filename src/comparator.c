@@ -17,6 +17,7 @@ corto_int16 _corto_t_comparator_init(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "arg1",
         corto_t_value_o,
+        CORTO_IN,
         FALSE
     );
 
@@ -24,6 +25,7 @@ corto_int16 _corto_t_comparator_init(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "arg2",
         corto_t_value_o,
+        CORTO_IN,
         FALSE
     );
 
@@ -31,6 +33,7 @@ corto_int16 _corto_t_comparator_init(
         corto_parameterseqAppendAlloc(&corto_function(this)->parameters),
         "ctx",
         corto_word_o,
+        CORTO_IN,
         FALSE
     );
 

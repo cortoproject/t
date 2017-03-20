@@ -113,3 +113,4 @@ test/suite DefaultVar::
     void tc_default()
     void tc_defaultBraces()
     void tc_defaultDot()
+    void tc_defaultCounter()

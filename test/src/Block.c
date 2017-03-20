@@ -6,7 +6,7 @@
  * when the file is regenerated.
  */
 
-#include <test.h>
+#include <include/test.h>
 
 corto_void _test_Block_tc_block(
     test_Block this)
